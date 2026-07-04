@@ -301,68 +301,129 @@ class IMM_Particle_Filter(nn.Module):
         # 增加时间步
         self.t += 1
         
-        # 步骤1：获取模型概率（切换概率）
-        # regime_probs[k, i, j]: 粒子i从模型k切换到模型j的概率
+        # =====================================================================
+        # 步骤1：获取每个粒子切换到各个模型的概率
+        # =====================================================================
+        # 每个粒子都有当前模型 k_{t-1}，我们现在要问：
+        # "这个粒子下一步切换到模型 k 的概率是多少？"
+        #
+        # 输出：regime_probs，形状 (batch, n_particles, n_models)
+        # regime_probs[b, i, k] = 粒子 i 切换到模型 k 的对数概率
+        #
+        # 例如 Erlang_Switching：
+        #   切换到下一个模型（k+1）的概率是 0.6
+        #   切换到上一个模型（k-1）的概率是 0.4
         regime_probs = self.model.get_regime_probs(self.x_t)
         
-        # 步骤2：调整模型概率（加入粒子权重）
-        # 权重高的粒子对模型选择有更大影响
+        # =====================================================================
+        # 步骤2：把切换概率和粒子权重结合（IMM 的"交互"核心）
+        # =====================================================================
+        # 每个粒子不仅有切换概率，还有一个可信度（权重）。
+        # 我们让权重高的粒子在模型选择中有更大的发言权。
+        #
+        # 对数空间中的加法，相当于普通概率空间中的乘法：
+        #   adj_prob(i, k) = p(粒子 i 切换到模型 k) × 粒子 i 的可信度
+        #
+        # 这样做的效果：
+        #   - 高权重粒子更容易"流向"其他模型
+        #   - 这就是 IMM 中模型间交互的本质
         adj_regime_probs = regime_probs + self.true_weights[:, :, None]
         
-        # 应用梯度缩放，防止梯度爆炸
+        # 梯度缩放：防止梯度太大导致训练不稳定
         adj_regime_probs = self.scale_grad.apply(adj_regime_probs)
         self.x_t = self.scale_grad.apply(self.x_t)
         
-        # 步骤3：计算总模型概率（在粒子维度上求和）
-        # tot_regime_probs[k]: 模型k的总概率
+        # =====================================================================
+        # 步骤3：统计每个模型的"总支持度"
+        # =====================================================================
+        # 把每个粒子的投票（adj_regime_probs）汇总起来，
+        # 看看所有粒子加起来，每个模型 k 获得了多少支持。
+        #
+        # 普通概率空间：sum_i p(粒子 i 切换到 k) × w_i
+        # 对数空间：logsumexp_i(log p + log w)
+        #
+        # 为什么用 logsumexp？
+        #   直接 exp 再求和可能会数值爆炸或变成 0，
+        #   logsumexp 内部会做数值稳定处理，保证结果安全。
+        #
+        # 输出形状变化：
+        #   输入: (batch, n_particles, n_models)
+        #   输出: (batch, n_models) — 每个模型获得的总体支持
         tot_regime_probs = pt.logsumexp(adj_regime_probs, dim=1)
         
-        # 步骤4：计算重采样权重
-        # regime_resampling_weights[i, j, k]: 粒子i分配给模型k的权重
+        # =====================================================================
+        # 步骤4：计算每个粒子应该分配到每个模型的概率
+        # =====================================================================
+        # 用单个粒子的投票除以所有粒子的总投票，得到归一化概率：
+        #   p(粒子 i 分配给模型 k) = adj_prob(i, k) / sum_j adj_prob(j, k)
+        #
+        # 在对数空间中就是减法：
+        #   log p = log adj_prob(i, k) - log sum_j adj_prob(j, k)
+        #
+        # 结果：权重高且切换概率高的粒子，更可能被分配到对应模型
         regime_resampling_weights = adj_regime_probs - tot_regime_probs[:, None, :]
         
-        # 初始化存储列表
-        xs = [None] * self.Nk  # 新粒子
-        indices = [None] * self.Nk  # 重采样索引
-        new_weights = [None] * self.Nk  # 新权重
+        # 初始化临时存储
+        xs = [None] * self.Nk          # 重采样后的粒子
+        indices = [None] * self.Nk     # 重采样选中的粒子索引
+        new_weights = [None] * self.Nk # 重采样后的新权重
         
-        # 保存旧粒子（用于后续计算）
+        # 保存旧粒子，后续计算权重修正会用到
         old_particles = self.x_t.clone()
         
-        # 步骤5：对每个模型进行重采样
+        # =====================================================================
+        # 步骤5：为每个模型重采样一批粒子（模型分配）
+        # =====================================================================
+        # 对每个目标模型 k，从所有旧粒子中按 regime_resampling_weights 挑选粒子。
+        # 权重高的粒子可能被多个模型同时选中，这就是"交互"。
+        #
+        # 为什么 detach()？
+        #   重采样是随机抽样，没法求梯度。
+        #   detach() 告诉 PyTorch：这部分不要参与反向传播。
         for k in range(self.Nk):
-            # 重采样：根据 regime_resampling_weights 选择粒子
-            # 参数：particles_per_model（该模型的粒子数）、当前粒子、重采样权重
-            # 返回：新粒子、新权重、选择的索引
             xs[k], new_weights[k], indices[k] = self.resampler(
                 self.particles_per_model, 
                 self.x_t.detach(), 
                 regime_resampling_weights[:, :, k].detach()
             )
         
-        # 拼接所有模型的新粒子
+        # 把各模型重采样后的粒子拼起来
         self.x_t_1 = pt.concat(xs, dim=1)
         
-        # 对于 'normal' 类型，计算旧权重（用于权重修正）
+        # 'normal' 模式需要额外记录旧权重，用于后面的权重修正
         if self.IMMtype == 'normal':
             indices = pt.concat(indices, dim=1)
             old_weights = batched_reindex(adj_regime_probs, indices)
         
-        # 标记已重采样
+        # 标记当前步已经过重采样
         self.resampled = True
         self.resampled_weights = self.log_weights.clone()
         
-        # 设置当前时刻的观测
+        # 设置当前时刻的观测值
         self.model.set_observations(self.truth._get_observation, self.t)
         
-        # 步骤6：状态转移（提议分布）
-        # 对每个模型应用状态转移：x_t = M_t_proposal(k, x_{t-1}, t)
+        # =====================================================================
+        # 步骤6：用各模型自己的动态方程传播粒子
+        # =====================================================================
+        # 对每个模型 k，用它的参数 a[k], b[k] 和噪声生成新粒子：
+        #   x_t = a[k] * x_{t-1} + b[k] + noise
         self.x_t = [self.model.M_t_proposal(k, xs[k], self.t) for k in range(self.Nk)]
         
-        # 步骤7：更新权重
-        # 根据 IMM 类型使用不同的权重更新公式
+        # =====================================================================
+        # 步骤7：根据观测给新粒子打分（更新权重）
+        # =====================================================================
+        # 新权重 = 观测匹配度 + 重采样权重 + 模型总体支持度
+        #
+        # 三项含义：
+        #   1. log_f_t: 这个粒子解释当前观测 y_t 的能力
+        #   2. new_weights: 重采样时带来的权重调整
+        #   3. tot_regime_probs: 模型 k 的总体可信度
+        #
+        # 三种模式的区别：
+        #   'new'（论文新方法）：把模型总体支持度 detach()，控制梯度流动，支持训练
+        #   'OT'（最优传输）：不 detach，保持梯度连续
+        #   'normal'（标准 IMM）：用 old_weights 做额外的权重修正
         if self.IMMtype == 'new':
-            # 新实现：分离部分梯度，支持端到端训练
             self.log_weights = pt.concat([
                 self.model.log_f_t(k, self.x_t[k], self.t) + 
                 new_weights[k] + 
@@ -370,7 +431,6 @@ class IMM_Particle_Filter(nn.Module):
                 for k in range(self.Nk)
             ], dim=1)
         elif self.IMMtype == 'OT':
-            # 最优传输：不分离梯度
             self.log_weights = pt.concat([
                 self.model.log_f_t(k, self.x_t[k], self.t) + 
                 new_weights[k] + 
@@ -378,7 +438,6 @@ class IMM_Particle_Filter(nn.Module):
                 for k in range(self.Nk)
             ], dim=1)
         else:
-            # 标准实现：使用 old_weights 进行权重修正
             self.log_weights = pt.concat([
                 self.model.log_f_t(k, self.x_t[k], self.t) + 
                 new_weights[k] + 
@@ -388,26 +447,117 @@ class IMM_Particle_Filter(nn.Module):
                 for k in range(self.Nk)
             ], dim=1)
         
-        # 拼接所有模型的粒子
+        # 拼接所有模型传播后的粒子
         self.x_t = pt.concat(self.x_t, dim=1)
         
-        # 步骤8：归一化权重
+        # =====================================================================
+        # 步骤8：把权重归一化成概率分布
+        # =====================================================================
+        # 让所有粒子的权重加起来等于 1，方便后续做状态估计。
+        # 仍然在对数空间操作，保持数值稳定。
         self.true_weights = normalise_log_quantity(self.log_weights)
         self.log_normalised_weights = self.true_weights
         
-        # 对于 'new' 类型且处于训练模式，添加额外的权重修正
+        # =====================================================================
+        # 训练模式下的额外修正（仅 'new' 类型）
+        # =====================================================================
+        # 这段代码是 DIMMPF 端到端训练的核心技巧：让梯度能够"偷偷"流过提议分布，
+        # 优化 NN_Switching 网络的参数。
+        #
+        # === 为什么需要这个？ ===
+        # 粒子滤波权重公式：w_t = p(y_t|x_t) * p(x_t|x_{t-1}) / q(x_t|x_{t-1})
+        # 其中 q(x_t|x_{t-1}) 是提议分布（由 NN_Switching 神经网络决定）。
+        # 
+        # 矛盾点：
+        #   - 前向计算：不要让 q 的数值影响权重（避免重复计算）
+        #   - 反向传播：让梯度能流过 q，优化网络参数
+        #
+        # === 核心技巧：weights - weights.detach() ===
+        # 
+        # | 操作                     | 前向传播（计算输出）      | 反向传播（计算梯度） |
+        # |--------------------------|-------------------------|-------------------|
+        # | weights                  | 具体数值（如 2.5）       | ✅ 有梯度          |
+        # | weights.detach()         | 同样的数值（2.5）        | ❌ 无梯度（被切断） |
+        # | weights - weights.detach() | 等于 0（2.5-2.5=0）    | ✅ 有梯度          |
+        #
+        # 效果：
+        #   - 前向传播时：+ 0，权重值不变
+        #   - 反向传播时：梯度能流过 weights，优化 NN_Switching 网络
+        #
+        # === 通俗比喻 ===
+        # 想象你在传送带上放了一个包裹。
+        # 前向传播：包裹被传送带送走，但传送带本身不留下任何东西（数值为 0）。
+        # 反向传播：传送带的运转记录被保留下来，告诉系统"哪里需要调整"（梯度能流过）。
+        # detach() 就像一个"单向门"：只让梯度过，不让数值留。
+        #
         if self.IMMtype == 'new' and self.training:
+            # 创建空列表，存储每个模型的修正项
             weights = [None] * self.Nk
+            
+            # =================================================================
+            # 步骤1：对每个模型 k，定位其粒子在数组中的位置
+            # =================================================================
+            # 在第 451 行，所有模型的粒子被拼成了一个总数组：
+            #   self.x_t = pt.concat(self.x_t, dim=1)  # 形状 (batch, 2000, ...)
+            # 
+            # 现在要反向拆分，取出每个模型对应的那部分粒子。
+            # 
+            # 例子（假设 Nk=8，每个模型 250 个粒子）：
+            # | k | start_range | end_range | 包含的粒子索引          |
+            # |---|-------------|-----------|------------------------|
+            # | 0 | 0           | 250       | 粒子 0~249（模型0的粒子）|
+            # | 1 | 250         | 500       | 粒子 250~499（模型1的粒子）|
+            # | 2 | 500         | 750       | 粒子 500~749（模型2的粒子）|
+            # | ... | ...       | ...       | ...                    |
+            # | 7 | 1750        | 2000      | 粒子 1750~1999（模型7的粒子）|
+            # 
+            # 通俗比喻：
+            #   一根长香肠被切成 8 段，每段 250 片。
+            #   start_range 和 end_range 告诉你"第 k 段从第几片开始，到第几片结束"。
+            #   这样就能从整根香肠中准确切出属于模型 k 的那一段。
+            #
             for k in range(self.Nk):
                 start_range = k * self.particles_per_model
                 end_range = (k + 1) * self.particles_per_model
-                # 计算提议分布的权重修正
+                
+                # =================================================================
+                # 步骤2：计算提议分布的修正项
+                # =================================================================
+                # weights[k] = adj_regime_probs（粒子分配概率） + log_M_t（提议分布密度）
+                # 
+                # 两项相加（对数空间）= 乘法（普通空间）：
+                #   weights[i, k] = p(粒子 i 分配给 k) × q(x_t^(i)|x_{t-1}^(i), k)
+                # 
+                # adj_regime_probs[:, None, :, k]：
+                #   粒子被分配到模型 k 的概率（考虑了权重）
+                # 
+                # self.model.log_M_t(...)：
+                #   提议分布的对数密度 log q(x_t|x_{t-1}, k)
+                #   这是 NN_Switching 网络需要学习的部分
+                # 
                 weights[k] = adj_regime_probs[:, None, :, k] + self.model.log_M_t(
                     k, self.x_t[:, start_range:end_range], old_particles, self.t
                 )
+            
+            # =================================================================
+            # 步骤3：汇总所有粒子的贡献
+            # =================================================================
+            # 拼接所有模型的修正项，然后在粒子维度上求和。
+            # 计算结果：所有粒子对提议分布的总体贡献。
+            #
             weights = pt.concat(weights, dim=1)
             weights = pt.logsumexp(weights, dim=2)
-            # 添加权重修正（分离梯度）
+            
+            # =================================================================
+            # 步骤4：加入修正项（核心技巧！）
+            # =================================================================
+            # self.log_weights + weights - weights.detach()
+            # 
+            # 前向传播：weights - weights.detach() = 0，权重不变
+            # 反向传播：梯度能流过 weights，优化 NN_Switching 网络
+            # 
+            # 这是 DIMMPF 能够端到端训练的关键一环。
+            #
             self.log_weights = self.log_weights + weights - weights.detach()
             self.log_normalised_weights = normalise_log_quantity(self.log_weights)
             self.true_weights = self.log_normalised_weights
