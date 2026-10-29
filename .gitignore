@@ -1,0 +1,11 @@
+# cloud/n1a-ws hygiene (do not ship evidence dumps)
+repro/exp/out_tlb/
+repro/**/__pycache__/
+**/__pycache__/
+*.pyc
+*.bak
+*.bak_*
+**/*.pdf
+paper/*.pdf
+repro/_smoke_*/
+repro/exp/out_tlb/**

@@ -1,0 +1,6 @@
+f9f1f9cfd4403503b10fea9accea605384f37691
+cloud/n1a-ws: isolate N1-A W_s Phase A wrapper for Cloud Agent
+Derived from dirty worktree 7cc1f57-dirty (base 7cc1f57322a7c4085a9ae46c54759f40c923391a).
+For Cloud Agent only ¡ª do not merge to main.
+Includes exp_n1a_Ws_phaseA.py + requirements pin; excludes out_tlb/pdf/bak.
+
