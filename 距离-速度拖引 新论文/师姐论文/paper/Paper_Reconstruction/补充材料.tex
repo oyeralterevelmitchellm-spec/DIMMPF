@@ -1,0 +1,1768 @@
+% !TeX program = xelatex
+% UTF-8. Equations transcribed from the original Word document without algebraic revision.
+\documentclass[UTF8,a4paper,zihao=-4]{ctexart}
+\usepackage[left=2.6cm,right=2.6cm,top=2.4cm,bottom=2.4cm]{geometry}
+\usepackage{amsmath,amssymb,mathtools,unicode-math}
+\setmainfont{TeX Gyre Termes}
+\setmathfont{TeX Gyre Termes Math}
+\usepackage{graphicx,booktabs,longtable,tabularx,array,caption}
+\usepackage{multirow}
+\usepackage{xeCJKfntef}
+\usepackage{xr-hyper}
+\usepackage[hidelinks,unicode]{hyperref}
+\hypersetup{pdftitle={距离-速度拖引类虚假量测下的多无人机／多传感器协同三维状态估计},pdfsubject={学术论文修订稿},pdfkeywords={多无人机协同,多传感器,三维状态估计,虚假量测,证据边界}}
+\usepackage{bookmark}
+\usepackage{float}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,calc}
+\usepackage{xurl}\urlstyle{same}
+\pagestyle{plain}
+\raggedbottom
+\linespread{1.18}
+\setlength{\parindent}{2em}
+\setlength{\parskip}{0pt}
+\setlength{\emergencystretch}{2em}
+\setlength{\arraycolsep}{4pt}
+\renewcommand{\arraystretch}{1.15}
+\setcounter{secnumdepth}{3}
+\ctexset{
+ section={format=\large\bfseries\raggedright,beforeskip=1.5ex plus .4ex,afterskip=.8ex},
+ subsection={format=\normalsize\bfseries\raggedright,beforeskip=1.2ex plus .3ex,afterskip=.6ex},
+ subsubsection={format=\normalsize\bfseries\raggedright,beforeskip=1ex plus .2ex,afterskip=.4ex}}
+\captionsetup{font=small,labelfont=bf,labelsep=quad,skip=6pt}
+\captionsetup[table]{position=top}
+\newcommand{\ul}[1]{\CJKunderline{#1}}
+\providecommand{\tightlist}{\setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\AtBeginDocument{
+ \setlength{\abovedisplayskip}{8pt plus 2pt minus 2pt}
+ \setlength{\belowdisplayskip}{8pt plus 2pt minus 2pt}
+ \setlength{\abovedisplayshortskip}{5pt plus 2pt}
+ \setlength{\belowdisplayshortskip}{5pt plus 2pt}}
+
+\graphicspath{{../}}
+
+% ponytail: 局部分组，避免hyperref外部命名链接的页码状态跨调用泄漏。
+\makeatletter
+\let\reconstruction@linkfile\hyper@linkfile
+\def\hyper@linkfile#1#2#3{\begingroup\reconstruction@linkfile{#1}{#2}{#3}\endgroup}
+\makeatother
+\externaldocument[][nocite]{主文}
+\begin{document}
+\begin{center}{\LARGE\bfseries 补充材料：理论证明、探索与实验审计\par}\end{center}
+\renewcommand{\thesection}{\Alph{section}}
+\renewcommand{\theequation}{S\arabic{equation}}
+\renewcommand{\thetable}{S\arabic{table}}
+\renewcommand{\thefigure}{S\arabic{figure}}
+本材料与主文配套阅读。表、图、公式采用S前缀；A--E为内容分区。\textbf{实验口径分三个世代，详见第~\ref{sup:repro-scope}~节}：主文表~\ref{tab:rmse_main}、表~\ref{tab:factorial}、表~\ref{tab:consistency} 已由本轮重建的 F50/F60 链路重跑替换；其余表沿用历史结果，其世代归属在各个表注中标明。
+
+\section{广义正交分解定理及完整证明}\label{sup:proof}
+
+本附录给出论文第~\ref{sec:decomposition}~节定理1在任意\(N\)平台配置下的推广及其完整证明。
+
+\subsection{符号说明}
+
+\noindent\textbf{关于本附录结论的定位。} 以下证明使用的数学工具——加权最小二乘的残差投影、嵌套模型的残差平方和分解、以及Cochran定理——均属线性高斯模型的经典理论；本附录的工作是\emph{把这一经典分解用于本文的距离-角度联合一致性统计量}（给出按平台距离方向的\(1+\nu\)维分解、秩亏与信息矩阵非单位时的处理），而不是提出新的统计原理。相应地，下述结论的成立范围是“固定观测矩阵\(\boldsymbol H\)、白化残差服从独立标准正态”的线性高斯模型；在本文的非线性量测场景中，它们应理解为在工作点局部线性化下的一阶近似结果。
+
+\noindent\textbf{关于信息矩阵\(\mathbf{W}\)的一般性。} 上面的\([(\mathbf{P}_{\perp}\widetilde{\mathbf{r}})_i]^2/(\mathbf{P}_{\perp})_{ii}\)是白化坐标下的写法，只有\(\mathbf{W}\)为块对角且平台内分量不相关（本文实现：\(\mathbf{W}=\mathrm{diag}(\sigma_R^{-2}\boldsymbol I_N,\sigma_{\mathrm{ang}}^{-2}\boldsymbol I_{2N})\)）时才与"沿第\(i\)平台距离方向"的信号一致。对\textbf{任意对称正定}\(\mathbf{W}\)，正确且坐标无关的写法是
+\begin{equation}
+q^{\mathrm{GLRT}}_{i,m}=\frac{(\mathbf{e}_i^{\mathrm T}\boldsymbol M_{\perp}\mathbf{r})^2}{\mathbf{e}_i^{\mathrm T}\boldsymbol M_{\perp}\mathbf{e}_i},
+\qquad
+\boldsymbol M_{\perp}=\mathbf{W}-\mathbf{W}\mathbf{H}(\mathbf{H}^{\mathrm T}\mathbf{W}\mathbf{H})^{+}\mathbf{H}^{\mathrm T}\mathbf{W},
+\label{eq:app-glrt-dir}
+\end{equation}
+其推导为：先对位置\(\delta\)求剖面（等价于投影到\(\mathrm{col}(\mathbf{H})\)的正交补），再对沿\(\mathbf{e}_i\)的偏置\(b\)取极小，即\(\min_b (\mathbf{r}-b\mathbf{e}_i)^{\mathrm T}\boldsymbol M_{\perp}(\mathbf{r}-b\mathbf{e}_i)\)，最优\(b=(\mathbf{e}_i^{\mathrm T}\boldsymbol M_{\perp}\mathbf{r})/(\mathbf{e}_i^{\mathrm T}\boldsymbol M_{\perp}\mathbf{e}_i)\)，代回即得式~\eqref{eq:app-glrt-dir}，且其值恰为\(b\)的二次型\(\mathbf{e}_i^{\mathrm T}\boldsymbol M_{\perp}\mathbf{e}_i\)倍。式~\eqref{eq:app-glrt-dir} 对非对角\(\mathbf{W}\)同样成立。但需区分三类相关：单个联合量测向量\emph{内部}的分量相关可由非对角\(\mathbf{W}\)表达；同一时刻\emph{不同候选之间}的相关涉及多候选联合随机向量，须把候选维并入协方差，属另一层模型；\emph{跨时刻}相关还涉及时间协方差。本文定理只覆盖第一类，不应把"任意正定\(\mathbf{W}\)"读作"任意候选相关模型"。本文的数值验证与全部实验均在对角（块对角）\(\mathbf{W}\)下完成；对一般\(\mathbf{W}\)本文只给出上述代数结论，不主张实现级数值验证。
+
+\(\bullet\) \(N\)：协同平台数量。
+
+\(\bullet\) \(d_m\)：每平台量测维度（\(d_m=3\)对应距离、俯仰角、偏航角）。
+
+\(\bullet\) \(\mathbf{P}_T\in\mathbb{R}^3\)：待估计的3维目标位置。
+
+\(\bullet\) \(\mathbf{H}\in\mathbb{R}^{Nd_m\times 3}\)：观测矩阵（量测Jacobian），第\((i-1)d_m+j\)行为第\(i\)平台第\(j\)维量测对\(\mathbf{P}_T\)的偏导数。
+
+\(\bullet\) \(\mathbf{W}\in\mathbb{R}^{Nd_m\times Nd_m}\)：量测权重矩阵（信息矩阵），通常为块对角阵\(\mathbf{W}=\text{diag}(\mathbf{R}_1^{-1},\ldots,\mathbf{R}_N^{-1})\)。
+
+\(\bullet\) \(\widetilde{\mathbf{H}}=\mathbf{W}^{1/2}\mathbf{H}\)：白化观测矩阵。
+
+\(\bullet\) \(\mathbf{P}_{\perp}\)：白化坐标系下的残差投影矩阵。
+
+\(\bullet\) \(r=\operatorname{rank}(\mathbf{H})\)：观测矩阵的秩，\(r\leq\min(Nd_m,3)\)。
+
+\(\bullet\) \(\mathbf{e}_i\in\mathbb{R}^{Nd_m}\)：指示向量，第\((i-1)d_m+1\)个分量为1，其余为0，对应第\(i\)平台的距离量测。
+
+主文第~\ref{sec:generalization}~节给出采用的广义定理；以下证明沿用其白化信号方向与适用条件。
+
+
+
+\subsection{证明}
+
+证明基于Cochran定理\cite{cochran1934}和秩-零化度定理\cite{seber2003linear}。
+
+\noindent\textbf{第一步：白化变换}\par
+
+给定原始残差\(\mathbf{r}\sim\mathcal{N}(\mathbf{0},\mathbf{W}^{-1})\)，定义白化残差
+\begin{equation}
+\widetilde{\mathbf{r}}=\mathbf{W}^{1/2}\mathbf{r}\sim\mathcal{N}(\mathbf{0},\mathbf{I}_{Nd_m}).
+\end{equation}
+
+在白化坐标系下，观测矩阵变为
+\begin{equation}
+\widetilde{\mathbf{H}}=\mathbf{W}^{1/2}\mathbf{H}.
+\end{equation}
+
+原加权二次型在消去待估位置后的残差平方和（即式~\eqref{eq:t2-stat}）可表示为
+\begin{equation}
+q_{i,m}=\mathbf{r}^{\mathrm{T}}\mathbf{W}\mathbf{r}
+-\bigl(\mathbf{H}^{\mathrm{T}}\mathbf{W}\mathbf{r}\bigr)^{\mathrm{T}}
+\bigl(\mathbf{H}^{\mathrm{T}}\mathbf{W}\mathbf{H}\bigr)^{+}
+\bigl(\mathbf{H}^{\mathrm{T}}\mathbf{W}\mathbf{r}\bigr)
+=\widetilde{\mathbf{r}}^{\mathrm{T}}\mathbf{P}_{\perp}\widetilde{\mathbf{r}}.
+\end{equation}
+式中右端两项缺一不可：第一项是白化残差的原始平方和\(\widetilde{\mathbf{r}}^{\mathrm{T}}\widetilde{\mathbf{r}}\)，第二项把残差投影到与\(\operatorname{col}(\widetilde{\mathbf{H}})\)正交的子空间；只有二者之差才是定理中的\(q_{i,m}\)。以下统一以\(q_{i,m}=\widetilde{\mathbf{r}}^{\mathrm{T}}\mathbf{P}_{\perp}\widetilde{\mathbf{r}}\)为唯一定义。
+
+\noindent\textbf{第二步：验证\(\mathbf{P}_{\perp}\)的幂等性}\par
+
+在白化坐标系下，\(\mathbf{P}_{\perp}\)是标准正交投影矩阵，满足
+\begin{equation}
+\mathbf{P}_{\perp}^2 = \mathbf{P}_{\perp}, \quad \mathbf{P}_{\perp}^{\mathrm{T}}=\mathbf{P}_{\perp}.
+\end{equation}
+
+验证：
+\begin{align}
+\mathbf{P}_{\perp}^2 &= \bigl(\mathbf{I}-\widetilde{\mathbf{H}}\mathbf{A}^{+}\widetilde{\mathbf{H}}^{\mathrm{T}}\bigr)^2,\qquad \mathbf{A}\equiv\widetilde{\mathbf{H}}^{\mathrm{T}}\widetilde{\mathbf{H}}\\
+&= \mathbf{I} - 2\widetilde{\mathbf{H}}\mathbf{A}^{+}\widetilde{\mathbf{H}}^{\mathrm{T}}
++ \widetilde{\mathbf{H}}\mathbf{A}^{+}\underbrace{\widetilde{\mathbf{H}}^{\mathrm{T}}\widetilde{\mathbf{H}}}_{\mathbf{A}}\mathbf{A}^{+}\widetilde{\mathbf{H}}^{\mathrm{T}} \\
+&= \mathbf{I} - 2\widetilde{\mathbf{H}}\mathbf{A}^{+}\widetilde{\mathbf{H}}^{\mathrm{T}}
++ \widetilde{\mathbf{H}}\mathbf{A}^{+}\widetilde{\mathbf{H}}^{\mathrm{T}}
+= \mathbf{I} - \widetilde{\mathbf{H}}\mathbf{A}^{+}\widetilde{\mathbf{H}}^{\mathrm{T}} = \mathbf{P}_{\perp},
+\end{align}
+其中用到伪逆的恒等式\(\mathbf{A}^{+}\mathbf{A}\mathbf{A}^{+}=\mathbf{A}^{+}\)。该推导\textbf{不要求\(\widetilde{\mathbf{H}}\)满列秩}：当\(r=3\)时\(\mathbf{A}^{+}=\mathbf{A}^{-1}\)，退化为普通逆；当\(r<3\)时\(\mathbf{A}\)奇异，但\(\mathbf{P}_{\perp}\)仍是到\(\operatorname{col}(\widetilde{\mathbf{H}})\)正交补的正交投影。
+
+由秩-零化度定理，
+\begin{equation}
+\operatorname{rank}(\mathbf{P}_{\perp}) = Nd_m - \operatorname{rank}(\widetilde{\mathbf{H}}) = Nd_m - r.
+\end{equation}
+
+\noindent\textbf{第三步：构造秩1信号投影矩阵}\par
+
+定义白化坐标系下的指示向量\(\widetilde{\mathbf{e}}_i=\mathbf{W}^{1/2}\mathbf{e}_i\)，构造
+\begin{equation}
+\mathbf{P}_{\text{signal}} = \frac{\mathbf{P}_{\perp}\widetilde{\mathbf{e}}_i\widetilde{\mathbf{e}}_i^{\mathrm{T}}\mathbf{P}_{\perp}}{\widetilde{\mathbf{e}}_i^{\mathrm{T}}\mathbf{P}_{\perp}\widetilde{\mathbf{e}}_i}.
+\end{equation}
+\textbf{归一化分母必须是\(\widetilde{\mathbf{e}}_i^{\mathrm{T}}\mathbf{P}_{\perp}\widetilde{\mathbf{e}}_i\)}：在一般正定\(\mathbf{W}\)下，\((\mathbf{P}_{\perp})_{ii}\)并不对应沿\(\widetilde{\mathbf{e}}_i\)的信号方向，二者不能互换；正确写法是式~\eqref{eq:app-glrt-dir}。对本文实现的块对角\(\mathbf{W}\)（平台内分量不相关），\(\widetilde{\mathbf{e}}_i\)与第\(i\)个白化坐标同向，才有\(\widetilde{\mathbf{e}}_i^{\mathrm{T}}\mathbf{P}_{\perp}\widetilde{\mathbf{e}}_i=(\mathbf{P}_{\perp})_{ii}/\sigma_i^2\)及相应的坐标形式；若在该块对角情形下混用（分子用\(\widetilde{\mathbf{e}}_i\)、分母用\((\mathbf{P}_{\perp})_{ii}\)），则\(\mathbf{P}_{\text{signal}}\)不是幂等的（例如\(\mathbf{W}=4\mathbf{I}\)时恰为标准投影的4倍），后续Cochran定理不成立。
+
+按上式的正确归一化，$\mathbf{P}_{\text{signal}}$是秩1正交投影：
+\begin{equation}
+\mathbf{P}_{\text{signal}}^2
+=\frac{\mathbf{P}_{\perp}\widetilde{\mathbf{e}}_i
+\bigl(\widetilde{\mathbf{e}}_i^{\mathrm{T}}\mathbf{P}_{\perp}\widetilde{\mathbf{e}}_i\bigr)
+\widetilde{\mathbf{e}}_i^{\mathrm{T}}\mathbf{P}_{\perp}}
+{\bigl(\widetilde{\mathbf{e}}_i^{\mathrm{T}}\mathbf{P}_{\perp}\widetilde{\mathbf{e}}_i\bigr)^2}
+=\mathbf{P}_{\text{signal}},\qquad
+\mathbf{P}_{\text{signal}}^{\mathrm{T}}=\mathbf{P}_{\text{signal}}.
+\end{equation}
+相应地，标量形式
+\begin{equation}
+q^{\mathrm{GLRT}}_{i,m}=\widetilde{\mathbf{r}}^{\mathrm{T}}\mathbf{P}_{\text{signal}}\widetilde{\mathbf{r}}
+=\frac{\bigl(\widetilde{\mathbf{e}}_i^{\mathrm{T}}\mathbf{P}_{\perp}\widetilde{\mathbf{r}}\bigr)^2}{\widetilde{\mathbf{e}}_i^{\mathrm{T}}\mathbf{P}_{\perp}\widetilde{\mathbf{e}}_i}.
+\end{equation}
+在块对角\(\mathbf{W}\)下，代入\(\widetilde{\mathbf{e}}_i^{\mathrm{T}}\mathbf{P}_{\perp}\widetilde{\mathbf{r}}=(\mathbf{P}_{\perp}\widetilde{\mathbf{r}})_i/\sigma_i\)与\(\widetilde{\mathbf{e}}_i^{\mathrm{T}}\mathbf{P}_{\perp}\widetilde{\mathbf{e}}_i=(\mathbf{P}_{\perp})_{ii}/\sigma_i^2\)，即得坐标形式\([(\mathbf{P}_{\perp}\widetilde{\mathbf{r}})_i]^2/(\mathbf{P}_{\perp})_{ii}\)，二者严格相等；\textbf{对一般\(\mathbf{W}\)，只有\(\widetilde{\mathbf{e}}_i\)形式成立}。
+
+\noindent\textbf{第四步：构造噪声投影矩阵并验证正交性}\par
+
+定义
+\begin{equation}
+\mathbf{P}_{\text{noise}} = \mathbf{P}_{\perp} - \mathbf{P}_{\text{signal}} = \mathbf{P}_{\perp}^{(-i)}.
+\end{equation}
+
+由\(\mathbf{P}_{\text{signal}}\mathbf{P}_{\perp}=\mathbf{P}_{\text{signal}}=\mathbf{P}_{\perp}\mathbf{P}_{\text{signal}}\)（\(\mathbf{P}_{\text{signal}}\)的值域含于\(\mathbf{P}_{\perp}\)的值域），有
+\begin{align}
+\mathbf{P}_{\text{noise}}^2
+&=\mathbf{P}_{\perp}^2-\mathbf{P}_{\perp}\mathbf{P}_{\text{signal}}
+-\mathbf{P}_{\text{signal}}\mathbf{P}_{\perp}+\mathbf{P}_{\text{signal}}^2
+=\mathbf{P}_{\perp}-\mathbf{P}_{\text{signal}}=\mathbf{P}_{\text{noise}},\\
+\mathbf{P}_{\text{signal}}\mathbf{P}_{\text{noise}}
+&=\mathbf{P}_{\text{signal}}\mathbf{P}_{\perp}-\mathbf{P}_{\text{signal}}^2
+=\mathbf{P}_{\text{signal}}-\mathbf{P}_{\text{signal}}=\mathbf{0},
+\end{align}
+即\(\mathbf{P}_{\text{noise}}\)亦为对称幂等矩阵，且与\(\mathbf{P}_{\text{signal}}\)正交。
+
+\noindent\textbf{第五步：计算秩}\par
+
+由\(\operatorname{rank}(\mathbf{P}_{\text{signal}})=1\)和\(\operatorname{rank}(\mathbf{P}_{\perp})=Nd_m-r\)，得
+\begin{equation}
+\operatorname{rank}(\mathbf{P}_{\text{noise}}) = Nd_m - r - 1 = \nu.
+\end{equation}
+
+\noindent\textbf{第六步：应用Cochran定理}\par
+
+由Cochran定理\cite{cochran1934}，对于白化残差\(\widetilde{\mathbf{r}}\sim\mathcal{N}(\mathbf{0},\mathbf{I})\)，
+\begin{align}
+q_{i,m} &= \widetilde{\mathbf{r}}^{\mathrm{T}}\mathbf{P}_{\perp}\widetilde{\mathbf{r}} \sim \chi^2(Nd_m-r), \\
+q^{\mathrm{GLRT}}_{i,m} &= \widetilde{\mathbf{r}}^{\mathrm{T}}\mathbf{P}_{\text{signal}}\widetilde{\mathbf{r}} \sim \chi^2(1), \\
+q_{-i} &= \widetilde{\mathbf{r}}^{\mathrm{T}}\mathbf{P}_{\text{noise}}\widetilde{\mathbf{r}} \sim \chi^2(\nu).
+\end{align}
+
+因为\(\mathbf{P}_{\text{signal}}\mathbf{P}_{\text{noise}}=\mathbf{0}\)（正交），Cochran定理保证
+\begin{equation}
+q_{i,m} = q^{\mathrm{GLRT}}_{i,m} + q_{-i},
+\end{equation}
+且\(q^{\mathrm{GLRT}}_{i,m}\)与\(q_{-i}\)独立。\(\square\)
+
+\subsection{关于几何条件的说明}
+
+观测矩阵\(\mathbf{H}\)的秩取决于量测类型和平台几何配置。对于距离-角度联合量测：
+
+\textbf{一般配置}：当目标位置对各平台的距离和角度均敏感时，\(\operatorname{rank}(\mathbf{H})=\min(Nd_m,3)=3\)，此时\(\nu=Nd_m-4\)。对于\(N=3\)、\(d_m=3\)的配置，\(\nu=9-4=5\)，与论文定理1一致。
+
+\textbf{退化配置}：当存在几何退化（例如，目标在某些平台的盲区、或量测雅可比秩损失）时，\(r<3\)，此时\(\nu=Nd_m-r-1\)可能更大。具体秩的分析需要考虑量测类型和平台配置的细节。
+
+\textbf{重要说明}：本定理中的\(\mathbf{H}\)是距离-角度联合量测的雅可比矩阵，不是论文命题2中纯多普勒场景的视线矩阵\(\mathbf{U}\)。两者的秩分析条件不同，不应混淆。
+
+\section{探索性关联算法}\label{sup:exploratory}
+
+本附录收录两项探索性工作：候选编号一致性假设的放宽（全组合搜索）与短窗动态规划路径优化。二者均\textbf{未接入主实验}，不构成任何端到端性能结论，列于此以备复现与后续引用。
+
+\subsection{候选编号一致性假设的放宽（探索性）}
+
+本节记录逐帧全组合锚定的早期探索；其跨帧版本已发展为第~\ref{sec:tuple}~节的元组级后验（表~\ref{tab:tuple}），本节保留以说明演进过程与计算代价。
+
+第~\ref{sec:association}~节的combo累积假设各平台的候选编号跨平台一致，即仅考虑对角组合\((m,m,m)\)，共\(M=4\)个。该假设简化了搜索空间，但要求预先完成距离/角度的盲关联。第~\ref{sec:association}~节提出将搜索空间扩展至全部\(M^N=64\)个跨机组合，使每个平台的候选独立选取，从而去除编号一致性假设。
+
+\textbf{算法实现}：枚举全部组合\((m_1,\ldots,m_N)\in\{1,\ldots,M\}^N\)，对每个组合计算代价函数
+\begin{equation}
+J_{m_1,\ldots,m_N}(k) = \sum_{i=1}^N w_{R,i} J_{R,i,m_i}(k) + \sum_{i=1}^N w_{D,i} J_{D,i,m_i}(k),
+\end{equation}
+其中\(J_{R,i,m}\)与\(J_{D,i,m}\)分别为距离与多普勒通道的代价，权重\(w_{R,i}\)、\(w_{D,i}\)取决于几何配置（命题1/2的可辨识性分析）。累积更新规则保持不变：
+\begin{equation}
+\log w_{m_1,\ldots,m_N}(k+1) = \tau \log w_{m_1,\ldots,m_N}(k) - J_{m_1,\ldots,m_N}(k),
+\end{equation}
+锁定判据为对数权重间隙超过阈值\(\Delta_{\text{lock}}=10\)。
+
+\textbf{复杂度分析}：全组合搜索的计算复杂度为\(O(M^N)\)，对于\(M=4\)、\(N=3\)的配置，从对角组合的4次代价评估增至64次，增幅16倍。实测单次代价评估约0.33~ms（对角组合）与10.0~ms（全组合，2个种子）；判决每5帧（0.1~s）评估一次，10~ms约为该判决间隔的10\%，不构成实时性瓶颈。
+
+\textbf{实验验证}：在\textbf{简化场景}（联合拖引\(\rho=1\)、\(\kappa=50\)、\(t_0=10\)~s；候选生成与后端均不同于主实验）的10次蒙特卡洛中，对角组合锁定7/10、平均锁定时刻15.4~s（767帧$\times$0.02~s）、锁定后RMSE为\(212.93\pm 20.21\)~m。\textbf{这组数字不能与主实验的11.16~m比较}：场景、样本量与后端均不同，10次样本的区间也很宽。全组合搜索因数值稳定性问题未能在该配置下验证优势，完整验证留作未来工作。因此本节对全组合搜索的定位是\textbf{算法形式的初步探索}，不构成“已去除编号一致性假设”或“已提升可靠性”的结论。
+
+作为对照，MC=115 的逐帧诊断（第~\ref{sec:association}~节负结果段）显示该种子在非相干臂上前 505 帧未锁定、随后 30 帧误锁到候选2、其后 464 帧不再切换——这说明\textbf{锁定判据一旦在早期窗口触发即不可撤销}，也解释了为何该种子在独立确认集中出现尾部失效。
+
+\subsection{短窗动态规划路径优化（探索性）}
+
+标准combo累积逐帧独立选择最优候选，噪声可能导致候选路径的频繁跳变，增加误锁风险。本节引入短窗动态规划\cite{renVG2026}，在局部时间窗口内考虑路径一致性，利用速度估计的物理约束平滑候选轨迹。
+
+\textbf{算法原理}：设窗口长度为\(W\)帧，时刻\(w\)的候选集大小为\(K_w\)，候选\(q\in\{1,\ldots,K_w\}\)的单帧代价为\(S[w][q]=-\log w[q]\)（来自combo累积的负对数权重）。定义累积代价递推：
+\begin{equation}
+F[w][q] = S[w][q] + \min_{p\in\{1,\ldots,K_{w-1}\}} \left\{ F[w-1][p] + \lambda \cdot J_{\text{trans}}(p\to q) \right\},
+\end{equation}
+其中转移代价\(J_{\text{trans}}(p\to q)\)衡量从候选\(p\)跳转至候选\(q\)的速度变化：
+\begin{equation}
+J_{\text{trans}}(p\to q) = \frac{\|\hat{\mathbf{V}}_q - \hat{\mathbf{V}}_p\|^2}{\sigma_v^2},
+\end{equation}
+\(\hat{\mathbf{V}}_p\)为候选\(p\)对应的速度估计（通过EKF从该候选的量测更新得到），\(\sigma_v\)为目标速度变化的标准差（机动目标取50\(\sim\)100~m/s，匀速目标取10\(\sim\)20~m/s），\(\lambda\geq 0\)为平滑权重。当\(\lambda=0\)时退化为逐帧最优；\(\lambda\to\infty\)时强制路径平滑，可能牺牲单帧最优性。推荐\(\lambda=1.0\)以均衡两者。
+
+初始化\(F[0][q]=S[0][q]\)，按上式前向递推至\(F[W-1][q]\)，然后从终点最优状态\(q^*=\arg\min_q F[W-1][q]\)回溯指针，得到窗口内的最优候选序列\((q_0^*,\ldots,q_{W-1}^*)\)。窗口以步长\(\text{stride}=W/2\)滑动，输出每帧中点的候选。
+
+\textbf{物理意义}：上式的转移代价是速度变化的马氏距离，当相邻候选的速度估计差异超过\(\sigma_v\)时，\(J_{\text{trans}}>1\)，递推倾向于保持前一候选；反之则允许跳变。这种正则化利用了目标运动的平滑性先验，过滤了由量测噪声导致的虚假候选。
+
+\textbf{复杂度}：时间\(O(W\cdot K_{\text{avg}}^2)\)，其中\(K_{\text{avg}}\)为平均候选数量；空间\(O(W\cdot K_{\text{max}})\)存储回溯指针。对于\(W=10\)、\(K=4\)的配置，单次DP耗时约0.1~ms，相对combo累积本身的2~ms可忽略。
+
+\textbf{验证范围}：短窗DP在MSVC多普勒候选选择中已验证有效\cite{renVG2026}。本文只完成了\textbf{候选路径平滑的离线对比}；锁定成功率与端到端RMSE的改善\textbf{尚未做蒙特卡洛验证}，故不给出定量预期。
+
+图~\ref{fig:short-window-dp}给出短窗DP与单帧最优的候选路径对比（简化场景）。单帧最优因噪声出现\textbf{18次}跳变（其中多次为单帧尖峰，如第5、8、18、22、25、35、38帧跳到候选3）；短窗DP将其降至\textbf{4次}，与真值路径的\textbf{4次}一致。需要强调，这只是\textbf{候选路径平滑}的离线对比，\textbf{未接入端到端跟踪}，故不能据此推断锁定率或RMSE的改善。
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\textwidth]{fig2_short_window_dp_comparison.pdf}
+\caption{短窗动态规划路径优化效果对比（简化场景，离线路径平滑）。单帧最优逐帧独立选择候选，噪声导致18次跳变（红色竖线）；短窗DP利用速度变化约束（转移代价\(J_{\text{trans}}\)）平滑路径，跳变降至4次，与真值路径的4次一致。该对比未接入端到端跟踪。}
+\label{fig:short-window-dp}
+\end{figure}
+
+\section{共享噪声假设的适用边界}\label{app:s}
+
+主文以"同一平台同一时刻各候选共享同一噪声实现"为模型的一部分（式~\eqref{eq:shared-noise}）。本附录回答两个问题：该假设能否由数据检验；它不成立时算法退化到什么程度。为量化违反程度，本附录引入一个\textbf{仅用于分析的扰动参数}\(s\in[0,1]\)：\(s=1\) 对应主文模型（完全共享），\(s=0\) 对应各候选独立加噪，中间值为共享与私有的方差混合。\textbf{\(s\) 不是主模型的参数}——主文全部结果均在 \(s=1\) 下产出，这里只把它当作"假设被违反多少"的刻度。
+
+\subsection{假设的可检验性}
+
+角度通道无干扰偏置（第~\ref{sec:deception}~节），\(s\) 可由数据估计：同一平台同一时刻的 \(M\) 个候选满足 \(\alpha_m=\alpha_{\rm true}+\varepsilon_{\rm sh}+\varepsilon_{{\rm pr},m}\)，故以\emph{该时刻}候选均值中心化后的无偏样本方差（分母 \(M-1\)）为
+\begin{equation}
+S_\alpha^2=\frac{1}{M-1}\sum_{m=0}^{M-1}\bigl(\alpha_m-\bar\alpha\bigr)^2,\qquad
+\mathbb E[S_\alpha^2]=(1-s)\sigma_\alpha^2,
+\label{eq:s-est}
+\end{equation}
+于是 \(\hat s=1-S_\alpha^2/\sigma_\alpha^2\)；俯仰与方位两通道合计 \(2N(M-1)=18\) 个自由度/帧。\textbf{归一化口径须写明}：若误用 \(M\) 为分母，其期望为 \(\frac{M-1}{M}(1-s)\sigma_\alpha^2\)，代入 \(\hat s=1-S_\alpha^2/\sigma_\alpha^2\) 会\textbf{系统高估} \(s\)：例如 \(M=4\)、\(s=0.5\) 时 \(\mathbb E[\hat s]=1-\frac34(0.5)=0.625\)。实测（20 个 MC、三重线性臂）在 50 帧窗口下：\(s=0.5\) 得 \(0.498\pm0.050\)、\(s=0.75\) 得 \(0.749\pm0.025\)、\(s=1\) 恒为 1.000；\(s=0\) 得 \(0.042\pm0.053\)（200 帧窗口降至 \(0.020\pm0.020\)）。需要说明口径：若\textbf{逐帧}截断到 \([0,1]\)（负估计被抬到 0 的单侧效应），\(s=0\) 的估计会升至约 \(0.13\)；本文改为“窗口平均后再截断”，故表中为 \(0.042\pm0.053\)，残余量小于窗口间标准差。上述为离线可行性验证。本文进一步把它\textbf{接入主配置}并做端到端对照：逐帧由同帧候选角度散布估计、时序累积后截到 \([0,1]\)，再按三种用法作用到双通道检验——(i) \textbf{门限缩放} \(\mathrm{gate}_{\rm eff}=18.48\,[1+\tfrac23(1-\hat s)]\)；(ii) \textbf{门控切换} \(\hat s<0.9\) 时退回硬门控（定理~1 的约消前提此时不成立）；(iii) \textbf{指数缩放} \(\alpha_{\rm eff}=\alpha\hat s\)（\(q\) 被私有噪声整体放大，按比例放松）。在 \(s=0.25/0.5/0.75\)、相干共同与非相干两臂上各 12 次蒙特卡洛，结果见表~\ref{tab:s-online}。三点结论。
+
+其一，\textbf{\(\hat s\) 的在线精度足够}：三种 \(s\) 下 \(\hat s\) 的中位数为 0.25/0.50/0.75，与真值相差不超过 0.01，且不使用任何真值标签——这回答了“\(s\) 未知时能否知道它”的问题。
+
+其二，\textbf{有用但幅度有限}：门限缩放在 \(s=0.25\) 与 \(0.5\) 的非相干臂上把均值由 48.95/39.45 m 降至 39.48/29.88 m、发散由 4/12、3/12 降至 3/12、2/12；指数缩放在 \(s=0.25\) 的相干共同臂上把均值由 20.18 m 降至 14.94 m 并消除该格的发散。其余各格与固定门限的差异不超过 0.2 m。
+
+其三，\textbf{门控切换有害}：六个格全部劣化（非相干臂发散由 4/12、3/12、1/12 升至 7/12、7/12、5/12）。这与定理~1 不矛盾——\(\hat s<1\) 时 \(q\) 被私有噪声整体抬高，硬门限会把真候选一并剔除；\textbf{软加权的价值恰在于对这种标定误差不敏感}。
+
+因此“知道 \(s\)”不足以修复 \(s<1\) 时的失效结构：主配置仍取固定门限 18.48 与混合门控，在线 \(\hat s\) 作为\textbf{可选的门限修正项}（在 \(s\lesssim0.5\) 时可小幅降低非相干臂的尾部风险），而不是必需组件。
+
+\begin{table}[htbp]
+\centering
+\caption{在线 \(\hat s\) 的三种用法与固定门限的端到端对照（位置 RMSE 均值，m；括号内为发散计数（$>50$ m）；每格 12 次蒙特卡洛、同批种子；\(\hat s\) 中位为跨样本中位）}\label{tab:s-online}
+\small
+\begin{tabular}{@{}llccccc@{}}
+\toprule
+\(s\) & 干扰臂 & 固定 & 门限缩放 & 门控切换 & 指数缩放 & \(\hat s\) 中位\\
+\midrule
+0.25 & 相干·共同 & 20.18 (1/12) & 20.12 (1/12) & 41.53 (2/12) & \textbf{14.94 (0/12)} & 0.25\\
+0.25 & RGPO非相干 & 48.95 (4/12) & \textbf{39.48 (3/12)} & 114.47 (7/12) & 41.45 (3/12) & 0.25\\
+0.50 & 相干·共同 & 10.60 (0/12) & 10.66 (0/12) & 16.04 (1/12) & \textbf{10.72 (0/12)} & 0.50\\
+0.50 & RGPO非相干 & 39.45 (3/12) & \textbf{29.88 (2/12)} & 120.60 (7/12) & 30.44 (2/12) & 0.50\\
+0.75 & 相干·共同 & 43.48 (2/12) & 43.69 (2/12) & 76.69 (4/12) & 43.72 (2/12) & 0.75\\
+0.75 & RGPO非相干 & \textbf{20.08 (1/12)} & 20.14 (1/12) & 101.57 (5/12) & 20.09 (1/12) & 0.75\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{违反时的退化}
+
+把 \(s\) 从 1 往下调，即逐步引入逐候选私有噪声。对\textbf{本文方法}的影响为：在 \(s\in\{0,0.25,0.5,0.75,1\}\) 上各跑 30 次蒙特卡洛（同批种子 $0\sim29$、同一候选生成与后端），结果见表~\ref{tab:s-sweep}。三点结论。
+
+其一，\textbf{\(s=1\) 是唯一在四个臂上都不出现发散的取值}（各 0/30）；\(s\) 降低后相干共同臂的发散计数依次为 1、3、3、9（\(s=0.25/0.5/0.75/0\)，各 30 次），非相干臂为 5、3、1、4。以 \(s=0\) 最差：相干共同臂均值 80.84 m、发散 9/30（30\%），非相干 25.66 m、4/30。
+
+其二，\textbf{对 \(s\) 的依赖不是单调的}：非相干臂在 \(s=0.25\) 的均值（29.47 m）高于 \(s=0.5\)（21.93 m），相干共同臂在 \(s=0.25\)（15.36 m）却低于 \(s=0.5\)（30.35 m）。30 次样本下这类交叉与抽样波动相容，不宜据此排列"哪个 \(s\) 更危险"；可稳健读出的只有"\textbf{\(s<1\) 显著差于 \(s=1\)}"。
+
+其三，\textbf{\(q_{-i}\) 的候选无关性只在 \(s=1\) 成立}：同平台各候选 \(q_{-i}\) 的相对极差随 \(s\) 降低由 \(4.5\times10^{-9}\) 升至 \(3.3\times10^{-3}\sim6.2\times10^{-3}\)。这与定理~1 的适用条件一致——\(s<1\) 时逐候选私有角度噪声进入 \(q_{-i}\)，约消不再精确。
+
+\begin{table}[htbp]
+\centering
+\caption{共享噪声占比 \(s\) 的端到端敏感性（每点 30 次蒙特卡洛、同批种子 $0\sim29$；位置 RMSE 均值，m；括号内为发散计数（$>50$ m）；末列为同平台各候选 \(q_{-i}\) 的相对极差中位值）}\label{tab:s-sweep}
+\small
+\begin{tabular}{@{}lcccccc@{}}
+\toprule
+\(s\) & 传统VGPO & RGPO非相干 & 相干·共同 & 相干·差分 & \(q_{-i}\) 相对极差\\
+\midrule
+0    & 9.44 (0/30) & 25.66 (4/30) & 80.84 (9/30) & 40.94 (5/30) & $6.2\times10^{-3}$\\
+0.25 & 9.49 (0/30) & 29.47 (5/30) & 15.36 (1/30) & 10.91 (0/30) & $5.7\times10^{-3}$\\
+0.5  & 9.78 (0/30) & 21.93 (3/30) & 30.35 (3/30) & 15.69 (1/30) & $4.7\times10^{-3}$\\
+0.75 & 10.29 (0/30) & 14.50 (1/30) & 27.69 (3/30) & 22.97 (2/30) & $3.3\times10^{-3}$\\
+1    & 10.84 (0/30) & 10.96 (0/30) & 11.08 (0/30) & 11.26 (0/30) & $4.5\times10^{-9}$\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+因此主文把结论限定在 \(s=1\) 的共享噪声模型内；模型被违反时的适用性需按同一程序重新标定，在线 \(\hat s\) 的接入见上一小节。退化的具体机理尚未定位，本文将其作为\textbf{开放项}列出：此前已排除两条候选解释——\(q_{-i}\) 约消的破坏（\(s<1\) 时相对极差仍远小于 1），以及候选间逐帧私有噪声（对组合代价做 $W=5$ 滑窗平均无改善，33.78 m 对基准 33.72 m）。
+
+\subsection{模拟器实现}
+
+候选生成器按方差占比把单候选噪声拆成共享项与逐候选私有项（接口参数 \texttt{noise\_mode='shared'}、\texttt{share=\(s\)}）：共享项对同一平台同一时刻的全部候选取同一实现，私有项逐候选独立。主结果固定 \texttt{share=1.0}，此时私有项标准差为 0，等价于每个(平台, 时刻)只抽一份四维噪声并广播给全部候选。本附录的扫描只改变该开关，其余参数与主结果一致。
+
+
+
+\section{实验审计与额外分析}\label{sup:audits}
+
+
+\subsection{T1补充诊断与参数耦合}\label{sup:t1-diagnostic}
+还需注意\textbf{参数耦合}：在本节的函数族下，改变\(\rho\)不仅改变失配幅度，也改变多普勒偏置的\textbf{波形}。以线性拖引\(f(x)=x\)为例，\(\mathrm{d}\Delta R/\mathrm{d}t=D_J/T_J\)为常数而\(v_j(t)=V_Jt/T_J\)随时间线性增长，故\(\Delta v(t)=\rho D_J/T_J+(1-\rho)V_Jt/T_J\)同时含直流项与斜坡项，其比例随\(\rho\)变化。因此“检出率随\(\rho\)下降”只能解释为\textbf{该参数化下窗内净失配的减小}，不能单独归因于某种“相干性”的物理效应；第~\ref{sup:rho}~节的C2情形给出了\textbf{失配波形固定、仅缩放幅度}的对照，用于分离这一混淆。
+
+
+
+\subsection{盲参考条件下的 T2 虚警率}\label{sup:t2-blind}
+
+T2 的零分布 $q\sim\chi^2(3N-3)$ 是在\textbf{已知参考候选身份}下推导的；实际使用时参考由同一批观测选出
+（\texttt{geo} 纯角度三角定位锚定，不使用任何身份标签），这种数据依赖的选择事件原则上可能改变
+条件分布。本小节给出经验核查（\texttt{exp/exp\_t2\_blind\_far.py}，30 个种子、后段 50 帧、3 平台，
+共 4500 个平台-帧样本；门限 $\chi^2(6,0.99)=16.81$）：
+
+\begin{table}[htbp]\centering\small
+\caption{T2 在两种锚定方式下的经验虚警率}\label{tab:t2-blind}
+\resizebox{\linewidth}{!}{%
+\begin{tabular}{@{}lcccccc@{}}\toprule
+臂 & 样本 & \texttt{index} FAR & \texttt{geo} FAR & \texttt{geo} 选中真候选 & \texttt{geo} 选对时 FAR & \texttt{geo} 选错时判真候选不一致 \\ \midrule
+传统VGPO & 4500 & 1.20\% & 1.20\% & 100.0\% & 1.20\% & — \\
+RGPO非相干 & 4500 & 1.20\% & 51.4\% & 33.7\% & \textbf{0.99\%} & 77.0\% \\ \bottomrule
+\end{tabular}}\end{table}
+
+分解方法：若 \texttt{geo} 恰好锚到真候选，则它对候选 0 给出的统计量与 \texttt{index} 逐位相同；
+据此把样本分为“选对”与“选错”两组（共 4500 个平台-帧，按帧判定同一参考）。
+
+三点读法：
+
+\textbf{（i）无拖引时两种锚定完全一致。}传统VGPO 臂上 \texttt{geo} 100\% 选中真候选，FAR 均为 1.20\%，
+与名义 1\% 的偏差在二项噪声内（$\mathrm{se}=0.15\%$）。
+
+\textbf{（ii）存在距离拖引时整体拒绝率升高，但不是虚警。}非相干臂上 \texttt{geo} 的整体误剔除率为 51.4\%，
+原因是它只在 33.7\% 的帧锚到真候选；锚错的帧上，判“真候选与参考不一致”是\textbf{正确检测}（77.0\% 的帧如此）。
+
+\textbf{（iii）条件分布未偏移。}\texttt{geo} 仍选对真候选的那些帧上，FAR 为 \textbf{0.99\%}——
+与名义 1\% 及 \texttt{index} 口径（1.20\%）一致。因此“参考由数据选出”并未使 $q$ 的零分布变宽，
+盲锚定下的高拒绝率来自\textbf{锚定失败}，而不是检验本身的虚警膨胀。
+
+这一结果把审稿意见中“盲参考可能破坏名义虚警率”的担心转化为一条\textbf{正面证据}；
+但也说明另一件事：\texttt{geo} 锚定在距离拖引下只有三分之一的帧能选对参考，
+这解释了为什么主流程仍需 T1 与跨帧累积辅助锚定，而不能单靠几何锚定。
+
+\subsection{统计门限、长期误警与混合门控}\label{sup:gate}
+检验一与检验二使用不同时间尺度的信息（前者为\([k-L,k]\)的差分，后者为当前历元），但二者\textbf{共享当前历元的距离观测}，因此并不统计独立。本文不依赖独立性假设，而采用与第~\ref{sec:single-channel}~节门限相同的零假设经验校准：将二者按
+
+合成后，在真实回波假设下由仿真给出其经验分布。实测（20次蒙特卡洛、2580帧）：\(q_{i,m}\)的均值为5.86、0.99分位为16.25，与\(\chi^2(6)\)的6与16.81相符；\(q^{\mathrm{tot}}_{i,m}\)的均值为6.88、0.99分位为\textbf{18.15}，与名义\(\chi^2(7)\)的7与18.48接近，且在18.48处经验虚警率恰为1.0\%。需要澄清相关性的对象：复算（20次蒙特卡洛、2700个真值样本）给出\(q_{i,m}\)与\((Z_{i,m}/\sigma_Z)^2\)的相关系数为\textbf{0.049}，近似独立；而\(q_{i,m}\)与合成量的0.934是"分量--和"的必然相关，不能作为二者不独立的证据。因此本文以\(\chi^2(7,0.99)=18.48\)作为\textbf{名义参考门限}，其有效性由上述经验校准而非独立性论证支撑；若场景或噪声口径改变，应按同一程序重新标定。在独立种子（MC=100$\sim$119）的零假设场景上，T1 的名义 1\% 门（阈值$2.630\sigma_Z$）的实测 FAR 为 0.0075（帧级，3600 帧；轨迹级 bootstrap 95\%CI [0.005,0.010]，20 条轨迹中 15 条至少一次超限），与名义值同量级。T2 与合成统计量也已在同一独立种子集上单独验证（10800 个平台-帧样本）：T2 的名义 1\% 门（16.81）实测 FAR 为 \textbf{0.0069}（轨迹级 95\%CI [0.0055,0.0085]，14/20 条轨迹至少一次超限），\(q^{\mathrm{tot}}\) 的名义 1\% 门（18.48）实测 FAR 为 \textbf{0.0100}（[0.0082,0.0119]，20/20）；实测 0.99 分位分别为 15.88 与 18.47（名义 16.81/18.48）、均值 5.99/6.98（名义 6/7）。因此 T2 与合成统计量的名义门限在独立零假设种子上同样可用；该验证仍限无干扰、单候选场景，含干扰时的门限行为以第~\ref{sec:robustness}~节的端到端结果为准。
+
+
+
+表~\ref{tab:far}把两个层次分开报告，三点值得注意。其一，\textbf{帧级标定不等于轨迹级保证}：名义 1\% 的单帧门限在 180 帧轨迹上按独立帧计算应有 83.6\% 的轨迹至少误警一次，实测 15/20；在 540 个平台-帧上独立帧预测为 99.6\%，实测 T2 为 14/20、合成量为 20/20。其二，T2 的实测轨迹级比例低于独立帧预测，原因可从逐轨迹超限计数直接读出：20 条轨迹的 T2 超限次数为 $0,3,6,9$ 的整数倍（均值 3.75、方差 10.3，明显过散），即\textbf{同一历元的三架平台往往同时超限}——它们共享同一目标几何与噪声实现，有效独立试验数接近帧数而非平台-帧数；同时轨迹间存在异质性（6/20 条轨迹零超限，其余 3$\sim$9 次）。因此\textbf{帧级 FAR 不能直接外推为长期误警率}，按平台-帧数计算的独立帧预测只是上界。其三，若要把轨迹级误警控制在给定水平，需按帧数分配显著性（如 $\alpha_{\mathrm{frame}}=1-(1-\alpha_{\mathrm{traj}})^{1/K}$）或改用序贯检验；本文未作此分配，故 1\% 只应读作单帧名义值，长时跟踪的误警预算需另行标定。
+
+接入关联时采用式~\eqref{eq:dual-gate} 的\textbf{混合门控}（本质是\textbf{启发式关联权重}，不是贝叶斯最优后验）：门限内按统计量幅值连续降权，门限外一律置零。它保留了硬门限的统计边界，同时避免硬门控在拖引初期"门限内全放行"的漏放问题。50次蒙特卡洛的主合同对比（同一批种子、同一候选集；参考候选取候选0，即上界）给出：相干共同臂位置RMSE由硬门控的16.96 m降至11.06 m（配对差\(+5.89\) m，95\%CI \([+0.27,+14.58]\)，基于混合臂自身的逐MC配对bootstrap），90\%分位由12.84 m降至11.99 m，发散样本（RMSE\(>50\) m）由3/50降至0/50；需要交代该均值差的构成：两臂中位值分别为11.04 m与11.01 m，5.89 m的均值差由硬门控3个\(>50\) m样本（53.6、58.4、212.0 m）贡献，剔除其中最大的一个后均值差降为2.09 m，逐MC配对\(t\)检验\(p=0.15\)、Wilcoxon符号秩检验\(p=7.2\times10^{-5}\)（同一批50个种子复算）。因此该对照支持的是“混合门控抑制尾部”，不支持“混合门控在典型工况下更准”；相干差分臂由11.51 m降至11.30 m（\(+0.21\)，\([+0.12,+0.30]\)）；传统VGPO与非相干臂无显著差异。协方差一致性同向：硬门控在传统VGPO的ANEES3为7.05（覆盖率0.644）、相干共同臂为36.24，混合门控分别为5.04（0.798）与3.72（0.907），50次蒙特卡洛的配对bootstrap置信区间均不含零。机理是硬门限在拖引开始后2\(\sim\)4 s内仍放行56\%\(\sim\)62\%的假候选（其\(q^{\mathrm{tot}}\)中位数13.7\(\sim\)15.8，低于18.48），连续降权把其相对权重压到0.016\(\sim\)0.056；后期\(\Delta R\)拉开后两者等价。100次蒙特卡洛复核给出同向结论：传统VGPO与非相干臂的"硬减混合"配对差为\(+0.00\)（\([-0.04,+0.04]\)）与\(+0.02\)（\([-0.03,+0.06]\)），相干共同与差分臂为\(+5.87\)（\([+0.59,+13.63]\)）与\(+0.59\)（\([+0.21,+1.30]\)），上述结果仅描述所测试场景中的差异；区间包含零的比较不能据此解释为已证明等效或非劣。需要说明，混合门控仍被限制在\(q^{\mathrm{tot}}\le18.48\)的统计边界内，并非无约束的二次计权；若场景或噪声口径改变，门限应按本节程序重新标定。
+
+需要明确式~\eqref{eq:dual-gate} 的适用层次。由定理1，它在“\textbf{候选间相对权重的共同背景项}”这一层次上是严格的：\(q_{-i}\)在PDA归一化中精确约消，故\(\beta\)不再含5自由度背景噪声；但\(\beta\)仍由\(q^{\mathrm{GLRT}}\)、T1项与\(L_s\)三项构成（式~\eqref{eq:thm1-cancel}），只是在T1项对候选近似相同、\(L_s\)差异可忽略时以\(q^{\mathrm{GLRT}}\)为主导。但\(q^{\mathrm{tot}}\)与PDA新息共享同一批距离/多普勒量测，二者并不独立，故它不是一个可与\(L_s\)相乘的\textbf{独立}似然因子，本文也不宣称式~\eqref{eq:dual-gate} 具有联合贝叶斯最优性；其绝对门限的有效性由经验校准（虚警率、RMSE、ANEES）支撑。若需把T1/T2统计量并入联合似然并重新推导后验，需满足下述条件，这留作后续工作。
+注记（严格化的具体条件）：乘积\(w\cdot L_s=\exp[-\tfrac12(d_M^2+q^{\mathrm{tot}})]\)等价于用合并二次型\(d_M^2+q^{\mathrm{tot}}\)作为单一指数，其中\(d_M^2\)为PDA新息马氏距离。它是合法似然当且仅当：(i) 各因子是其数据块的精确负对数似然；(ii) 两个数据块在\(H_0\)下条件独立。本场景中(ii)不成立（\(q^{\mathrm{tot}}\)与\(d_M^2\)共享距离量测，且\(\chi^2(7)\)是标定名义分布），故只能作为启发式。严格化有两条路径：其一，标定二维条件密度\(p(q^{\mathrm{tot}},d_M^2\mid H_0)\)并对\(H_m\)族的\(\Delta R\)先验取边缘，做精确似然比；其二，直接以原始量测在\(H_m\)族上的边缘似然（对\(\Delta R\)积分）替代乘积。两者均超出本文范围。
+
+若某历元全部候选均被式~\eqref{eq:dual-gate} 剔除，本文保留\(q^{\mathrm{tot}}\)最小的候选而非全部放行。该兜底策略并非实现细节：实测表明"全部放行"会使3\(\sim\)4条假回波同时进入关联，单帧即可将滤波器拽飞（相干拖引下位置RMSE 100.71 m，而保留最小统计量者为25.83 m）。
+
+
+
+\subsection{跨帧关联的详细诊断与负结果}\label{sup:association}
+检验一（式~\eqref{eq:t1-stat}）要求同一候选在\([k-L,k]\)内保持身份一致。仿真中候选序号由生成器给出且跨帧一致，但若只用\((\alpha,\beta,V_D)\)的最近邻重建关联链，纯VGPO下的正确率仅0.42/0.37（第~\ref{sup:ablation}~节第8条）——这是T1能否实际工作的前置条件，也是"盲关联"的真实短板（不使用真值标签，但需跨帧编号一致）。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+需要明确表~\ref{tab:assoc}的统计口径。\textbf{条件正确率}只在算法已判决（最大后验\(\ge0.8\)）的帧上统计；\textbf{判决覆盖率}是评估窗（拖引开始后10 s）内已判决帧的占比；\textbf{全时域正确率}=覆盖率\(\times\)条件正确率，弃权帧按错误计；\textbf{错误判决率}是已判决且判错的帧占比。若一个方法只在20\%的时刻判决且全部正确，条件正确率为1，但全时域仅0.2，不能解读为全时域100\%识别。表~\ref{tab:assoc}同时给出这四个量，避免以条件正确率替代全时域性能。
+
+
+
+关于锁定后的行为：T1-HMM按帧更新后验，允许在证据变化时切换身份，切换次数由\(\lambda\)扫描给出；combo累积为单次锁定，锁定后不再切换，锁定错误会计入表~\ref{tab:assoc}的错判率且不会在后续帧被自动纠正。因此表~\ref{tab:assoc}的"条件正确"是已判决帧上的正确率，不是全时域识别率；后者见表中"全时域正确"列。
+
+还需说明combo累积的候选编号条件：对角组合\((m,m,m)\)假设各平台的候选编号具有一致的物理身份，这在本文仿真中由同一生成器保证（与T1的"候选序号跨帧一致"是同一假设）。真实系统需先用距离/角度盲关联建立跨平台对应，本文未实现该对应；因此表~\ref{tab:assoc}是该假设下的结果，不能作为完全盲跨平台关联（不依赖编号一致）的证明。该条件可以放宽：把累积假设集从\(M\)个对角组合扩展到全部\(M^N=64\)个跨机组合——每个平台的候选\(m_i\)只是本地编号，假设是元组\((m_1,m_2,m_3)\)，无需跨平台对齐。20次蒙特卡洛下，全组合累积的锁定正确率仍为20/20（相干共同6.25 s、差分1.80 s、非相干6.25 s，中位），纯VGPO仍正确弃权（各组合代价无系统性差异）。代价是每帧组合数从\(M\)增至\(M^N\)（本文4\(\to\)64）、相干共同臂的锁定延迟由3.95 s增至6.25 s（差分1.80 s对0.80 s、非相干不变）。因此"编号跨平台一致"不是该方法的结构性前提，只是把组合数从\(M^N\)压到\(M\)的加速近似。
+
+
+
+仅当“最佳与次佳组合的速度代价差\(\ge5\)且最佳代价\(\le8\)”时才允许提前锁定，以避免纯VGPO下候选0/1同代价（间隔\(\approx0\)）时的误锁。20次蒙特卡洛给出：全臂锁定正确率20/20；锁定时刻由6.25 s提前至0.2 s（相干共同）、1.6\(\to\)0.1 s（差分）、6.25\(\to\)3.25 s（非相干）；端到端相干共同臂由全组合逐帧的28.82 m降至对角累积的23.82 m、再加速度惩罚后降至11.16 m（\(\gamma_v=0.5\)，20 MC），与oracle上界11.17 m的配对差95\%CI跨零；非相干臂在组合搜索前先用\(|Z_{i,m}|\le3\sigma_Z\)预筛候选池，由11.73 m进一步降至11.01 m，其余臂不变。敏感性（集中式前端，10次蒙特卡洛）：将\(V_{\mathrm{ref}}\)协方差并入式~\eqref{eq:combo-vpen-invfree}的分母（\(\sigma_d^2+\boldsymbol u_i^{\mathrm T}\boldsymbol P_{v,i}\boldsymbol u_i\)）后与基线均值一致到0.01 m（单种子最大差0.14 m）；事件起点提前1 s未出现劣化（均值差$-0.24\sim+0.05$ m，单种子最大4.9 m）；\textbf{延后1 s}则速度惩罚错过阶跃（\textbf{口径}：系统按\(t_0+1\)~s设定组合起点、而真实起拖仍在\(t_0\)，故\(V_{\mathrm{ref}}\)冻结在起拖之后、已被\(\Delta V\)污染），共同/差分/非相干臂均值劣化至53.0/26.7/23.0 m，发散计数（$>50$ m）分别为3/1/1（共10次），中位数仍10.4$\sim$11.4 m。因此事件起点的及时捕获是该机制的前提，实际系统需配合T1变化点检测。
+
+\textbf{两项事后修补的负结果}：针对上述“单次锁定”与“事件起点已知”两项限定，本文测试了两条最直接的修补，均未通过端到端验证（20次蒙特卡洛，三臂，同一候选集与后端）。
+（i）\textbf{锁定后持续校验}：要求已锁定候选每帧仍通过\(|Z_{i,m^*}|\le3\sigma_Z\)，被剔除时在存活池中按累积代价重选。该规则在独立种子集上确能修复非相干臂的失效（MC=115由125.01 m降至11.65 m；该臂均值17.15\(\to\)11.86 m、发散1/20\(\to\)0/20），但在主种子集上制造了3个新的发散样本（MC=2/19/4分别为355.0/233.1/147.4 m，该臂均值11.01\(\to\)46.32 m）。机理是T1的1\%虚警在千帧轨迹上必然多次触发，每次误剔除真候选后按历史累积代价重选都会放大早期偏差——该规则把“单次误锁”换成了“多次误切换”，并未减少不可辨窗口内的错误；以“最近5帧中3帧存在超限候选”限定其作用域（只在T1已建立时启用）并不改变这一结论，主种子集上仍为46.32 m。
+（ii）\textbf{事件起点的在线替代}：将\(V_{\mathrm{ref}}\)改为逐帧取当前一步预测速度（因而不依赖\(t_0\)）。主种子集上结果几乎不变（非相干臂11.01\(\to\)11.04 m），但独立种子集上相干共同臂由11.41 m劣化至17.13 m、非相干臂由17.15 m劣化至22.86 m，并新增MC=113的失效（124.87 m）——一旦某帧滤波速度被假候选拖偏，逐帧更新使参考速度随之漂移，速度惩罚失去判别力。
+
+因此本文保留“单次锁定”与“\(t_0\)前冻结\(V_{\mathrm{ref}}\)”两项设计，并把未知起点下的在线变点检测列为后续工作。这两个负结果只说明：在所测规则及样本上，未获得事后纠正更可靠的证据；它们不能证明MC=115的失效不可避免，也不能排除所有其他纠正方式。这也从反面支持第~\ref{sec:reference-conditions}~节的结论：决定检测能力的是参照的洁净度，而不是统计量或规则的复杂度。
+
+切换惩罚\(\lambda\)的扫描给出同向结论：在T1可辨臂，\(\lambda\)由0增至16时身份正确率由0.893升至0.999、切换次数由323次/千帧降至0.07次/千帧，"几乎不切换"即最优；在相干臂，任何\(\lambda\)都无法把正确率提到0.34以上，\textbf{调参救不了不可辨识}。因此本文的门控规则是：T1可辨时用T1-HMM并取\(\lambda=8\sim16\)；T1失明时改用combo累积；两者都不给证据时保持均匀后验、显式弃权。该规则与第~\ref{sec:reference-conditions}~节--3.3.6节的适用条件与检测边界是同一件事的算法侧表述。
+
+
+
+\subsection{参考缺失与恢复机制诊断}\label{sup:recovery}
+式~\eqref{eq:dual-gate}、组合搜索锚定与跨帧身份推断的共同前提是：\textbf{候选集中始终存在真实回波}，即干扰源在评估窗内不完全压制真实回波（尚未完成距离波门俘获，或周期回拖使真回波重现）。原主结果实验在该假设下进行；新增完全压制压力测试另见第~\ref{sup:suppression-audit}~节。此时组合搜索锚定可在不使用真值标签的条件下锁定参考（但依赖候选编号跨平台一致），双通道筛检可有效剔除被拖引的候选。
+
+当该假设不成立——真回波被完全压制、候选集只含假回波——时，任何组合的参考位置都由假回波构成，检验失去可比基准；在命题1明确限定的共线极限及一阶近似条件下，正文讨论的单历元判据不能提供可靠区分；这一表述不推广为任意几何或任意检验的不可能性结论。该情形属于本文假设之外的失效边界而非精度下降；其恢复机制（纯角度降级、回拖重锚）仅作机制验证，不纳入主结果。作为补充，本文测试了"波门俘获后降级为纯角度/膨胀距离-多普勒噪声"的恢复机制：在相干共同模态下，俘获后段（\(t\ge15\) s）位置误差仍约359 m（无降级388 m），因为幽灵与真实目标共享同一视线，角度通道不携带径向信息；相干差分下亦无实质改善（386 m对380 m）。因此纯角度降级不能替代洁净参照，恢复需依赖回拖瞬态或干扰参数辨识，这与命题1的观测等价性一致。进一步利用回拖帧\(\Delta R=0\)的物理事实实现重捕获：检测到距离阶跃后，用\textbf{距离+角度联合三边定位}（而非纯角度）重置位置与协方差，并由实测阶跃与周期\textbf{闭式盲估计}斜率\(\hat\kappa_{J,i,j}=[R_{i,j}(\hat k_{\mathrm{sb}}-1)-R_{i,j}(\hat k_{\mathrm{sb}})]/\hat T_J\)，对后续距离/多普勒作斜坡补偿。20次蒙特卡洛下：理想真值斜率上界为后段（\(t\ge15\) s）\textbf{10.4/10.4 m}、\(t\ge18\) s 7.6/7.6 m；仅用实测阶跃与周期估计斜率的\textbf{盲补偿}为\textbf{22.7/22.7 m}、\(t\ge18\) s \textbf{27.7/27.6 m}；纯角度重置为163.0/180.7 m、\(t\ge18\) s回到200 m量级。盲斜率把后段误差压低约86\%，但尚未达到理想上界；且事件起点\(t_0\)仍由场景给定，未知起点下的在线检测留作后续。
+
+
+
+\subsection{主性能比较的逐项解释}\label{sup:overall}
+图~\ref{fig:simulation}给出了两种干扰场景下的多普勒速度量测曲线。其中左图为三重线性拖引场景：三条干扰回波的偏置按各自周期线性增长并回零，与真实目标回波在速度维上形成明显分离；右图为四重线性及非线性混合拖引场景：干扰回波数量增加，且第4重为抛物线拖引，其偏置在周期后半段加速增长，使多普勒维的虚假量测分布更为密集、真假回波的区分难度更大。
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.84\linewidth]{latex/media/fig_vgpo_measurements.png}
+\caption{两种干扰场景下的多普勒速度量测曲线}\label{fig:simulation}
+\end{figure}
+
+
+在三重线性与四重混合两种干扰场景下各进行$N_{\mathrm{MC}}=50$次独立蒙特卡洛仿真（无干扰基线亦为$N_{\mathrm{MC}}=50$次），表~\ref{tab:rmse_main}给出了各对比方法在位置、速度与加速度三个维度上的RMSE中位值以及（均值$\pm$标准差）统计结果，图~\ref{fig:err-curves}给出了位置误差随时间的变化曲线。主要结论如下：
+
+\begin{enumerate}
+\item \textbf{虚假量测关联增益}：相比无门控基线（传感器量测直接被虚假回波牵引），采用PDA关联后位置RMSE中位值由11.13/10.90 m降至10.54/10.68 m（配对均值差为$+0.56$ m，95\%CI $[+0.48,+0.64]$；$+0.32$ m，95\%CI $[+0.25,+0.40]$，均不跨零），虚假多普勒回波对跟踪门的周期性拖偏被有效抑制；
+\item \textbf{多机几何协同增益}：单机独立处理的位置RMSE中位值为24.59 m与25.03 m，本文多机协同方法位置RMSE中位值为10.34 m与10.35 m（均值10.24 m与10.44 m）（配对均值差$+14.57$ m，95\%CI $[+13.99,+15.16]$；$+14.67$ m，95\%CI $[+14.12,+15.25]$），协同估计使位置误差降低约2.4倍（速度RMSE中位值由31.33/31.24 m/s降至17.31/17.59 m/s），与第~\ref{sup:geometry}~节多机可观性条件数分析结论一致；
+\item \textbf{融合反馈与长尾离群抑制}：无反馈融合由于局部节点切向弱可观，在50次实验中出现明显长尾离群（CI融合跨样本标准差2.71 m与2.68 m、ACF 2.72 m与2.68 m）；引入周期估计级反馈后，跨样本位置误差标准差降至1.04 m与0.93 m（CI融合，\textbf{降幅61.6\%与65.2\%}）与1.04 m与0.93 m（ACF，降幅61.7\%与65.3\%），配对均值差分别为$+2.09$ m（95\%CI $[+1.48,+2.74]$）与$+2.30$ m（95\%CI $[+1.74,+2.89]$），速度RMSE中位值同步降低2.10 m/s与2.15 m/s（无反馈ACF速度中位值19.41/19.74 m/s减有反馈17.31/17.59 m/s；相比无反馈CI的19.54/19.89 m/s则降低2.23/2.30 m/s）。需要明确两点：其一，表中"CI融合（无反馈）"代表\textbf{传统开环分布式融合基线}；其二，本文提出的周期性估计级反馈是\textbf{对CI与ACF均生效的闭环增强架构}——如表~\ref{tab:factorial}所示，反馈主效应达$-2.09$ m（95\%CI $[-2.74,-1.48]$）与$-2.30$ m（95\%CI $[-2.89,-1.74]$），是位置精度的主要来源。当为CI也配置相同反馈时，其位置RMSE降至10.34/10.36 m（表~\ref{tab:rmse_main}），与本文方法的差异$<0.01$ m（固定有反馈条件下ACF与CI的配对均值差$-0.008$，95\%CI $[-0.012,-0.004]$；$-0.008$，95\%CI $[-0.011,-0.005]$，统计可区分但效应量不足$0.1\%$）——选择ACF的理由不是位置精度，而是其保留了IMM的多模态机动概率结构，通信开销约为CI的3倍（仍远低于原顺序ACF）（详见第~\ref{sup:acf}~节、第~\ref{sec:fusion}~节与第~\ref{sup:ablation}~节第4条）；
+\item \textbf{与集中式PDA的对比}：本文分布式方法（ACF+反馈）的位置RMSE显著优于集中式PDA（配对均值差$-0.32$ m，95\%CI $[-0.50,-0.14]$；$-0.24$ m，95\%CI $[-0.38,-0.08]$），并与相同反馈条件下的CI融合差异$<0.01$ m；其价值在于以分布式架构的通信与扩展性取得与集中式同级的精度；
+\item \textbf{检验域与加权形式消融}：以集中式PDA（10.54 m）为基准，采用本文经验校准门限（$T=48$）的位置域筛检臂与之\textbf{逐位一致}（配对差$+0.000$ m）；多普勒域门限与连续加权在本合同下差异不显著、或仅小幅更优（多普勒域门限$-0.01$ m，95\%CI $[-0.05,+0.04]$；连续加权$\alpha=1.00/0.50/0.15$ 分别为$+0.00$、$-0.03$、$-0.02$ m，量级不超过0.03 m）。需要如实说明的是：在传统逐候选独立加噪假设（补充材料第~\ref{app:s}~节 的对照口径）下，这些策略曾表现为$+0.12\sim+0.67$ m 的显著劣化，并据此引出第~\ref{sup:double-count}~节的双重计数解释；改用共享噪声模型后该劣化消失，说明原劣化主要由"候选独立几何副本的平均增益被抑制"所致，而非双重计数本身。因此本文把第~\ref{sup:double-count}~节的机理结论定位为\textbf{候选携带独立几何信息时的条件性结论}，并如实保留共享合同下的实测：所测各形式在此采样尺度下对位置精度的影响均不超过0.03 m；
+\item \textbf{理论参考下界与无干扰对照}：线性化递推PCRLB（单Singer）为9.87 m（IMM混合口径10.20 m，二者相差3.4\%）。在共享噪声模型下，本文方法与集中式PDA的位置误差（10.24 m与10.56 m）分别高出该参考下界约4\%与7\%，未出现"低于参考下界"的反常。需要说明的是，传统逐候选独立加噪假设（逐候选独立加噪的对照口径）曾使带干扰场景误差（8.7 m量级）\textbf{低于}无干扰场景（10.5 m量级），并使"仅选真候选"臂反而劣于标准PDA（10.54 m vs 8.73 m）；诊断确认这是\textbf{仿真合同的口径伪影}：干扰候选与真实候选的距离/角度量测同源、且各自独立加噪，使门控内实含$M$个相互独立的同一几何量测副本并被标准PDA平均。修正为共享噪声模型后该伪影消失——「仅选真候选」臂（10.15/10.09 m）反而优于标准PDA（10.56/10.68 m，配对差$+0.41$ m，95\%CI $[+0.32,+0.49]$；$+0.59$ m，95\%CI $[+0.51,+0.67]$），带干扰场景亦不再优于无干扰（三重线性10.56 m vs 10.32 m）；无干扰场景下本文方法与集中式PDA持平（10.32 m），在该次对照中未观察到明显的位置误差增加，不作普遍非劣保证。该诊断与修正在第~\ref{sec:setup}~节(3)与第~\ref{sup:ablation}~节第7条给出。
+\end{enumerate}
+
+
+
+\subsection{额外消融、协方差校准与负结果}\label{sup:ablation}
+为验证第~\ref{sup:double-count}~节的双重计数机理、第~\ref{sec:fusion}~节的机动包络先验标定以及第~\ref{sec:feedback}~节反馈参数$(T_{\mathrm{fb}},\kappa,\lambda)$的作用，开展以下专项消融与诊断实验，结果汇总于表~\ref{tab:ablation_fb}、表~\ref{tab:factorial}与图~\ref{fig:ablation}、图~\ref{fig:threshold}：
+
+上述8条可归为三组：（一）检验域、门限与奇异子空间处理（第1--2条），回答位置域判据本身是否可用、门限如何标定、以及融合中奇异分量的处置；（二）反馈、融合与滤波器一致性（第3--4条），回答反馈是否必要、融合方式如何影响精度、协方差是否可信；（三）边界验证、开销与负结果（第5--8条），给出非对称干扰、低采样率、计算开销与三项负结果。
+
+\noindent\textbf{（一）检验域、门限与奇异子空间处理}\par
+\begin{enumerate}
+\item \textbf{检验域与加权形式消融（图~\ref{fig:ablation}(a)）}：在三重线性场景下，将位置域经验校准门限筛检（$T=48$）、连续加权策略（$\alpha\in\{0.15,0.50,1.00\}$）与多普勒域门限分别与集中式PDA作配对比较。以集中式PDA（10.54 m）为基准，位置域筛检臂与之\textbf{逐位一致}（配对差$+0.000$ m）——原因是该门限取零假设分布的经验0.99分位，且在评估窗内判据从未触发（见下条），故筛检完全未改变候选集合。多普勒域门限与连续加权在共享噪声模型下的差异不显著、或仅小幅更优（多普勒域门限$-0.01$ m，95\%CI $[-0.05,+0.04]$；连续加权$\alpha=1.00/0.50/0.15$ 分别为$+0.00$、$-0.03$、$-0.02$ m，量级均不超过0.03 m），即这些策略在该合同下既不带来显著收益、也不造成显著劣化。需要如实说明：在传统逐候选独立加噪假设（逐候选独立加噪的对照口径）下，同一消融曾给出$+0.12\sim+0.67$ m 的显著劣化，并据此引出第~\ref{sup:double-count}~节的双重计数解释；改用共享噪声模型后该劣化消失，说明原劣化主要来自"候选独立几何副本的平均增益被抑制"而非双重计数本身——因此本文将第~\ref{sup:double-count}~节的机理定位为\textbf{候选携带独立几何信息时的条件性结论}。可见位置域判据在本文尺度下不提升精度，其作用是把"运动学一致性"形式化为无需人工整定尺度的评分（其量化边界见下条）； \textbf{门限行为诊断与敏感性（图~\ref{fig:threshold}）}：蒙特卡洛统计给出真候选误剔率1.03\%、虚假候选保留率98.98\%、全部候选被剔除后触发放行的比例0.92\%、病态构型跳过率0（统计范围为\textbf{全程至观测近界}）；零假设评分诊断给出的候选级判别力AUC$=$0.500、真/假候选评分分布的KS统计量$\approx$0.001。需要强调的是，这些数字只描述"门限在零假设分布上的位置"，\textbf{并不构成可用的干扰告警或候选判别能力}。组合级专项诊断（统计量\(\max_c q^{\,c}\)）进一步说明：在\textbf{评估窗（前20\,s，\(k\le1000\)，与主结果一致）}内，带干扰与无干扰场景的告警触发率\textbf{均为0}，全部跨机候选组合的统计量都远低于门限（\(\max_c q^{\,c}\) 的0.99分位仅约11.8、中位约2.6）；只有在\textbf{临近观测近界}的少量帧上才出现超限，且全程触发率（三重线性1.69\%、四重混合1.68\%）与无干扰场景（1.37\%）量级相当、全剔除率甚至略低于无干扰场景（0.90\%/0.96\% 对 1.37\%）——说明这些超限帧的来源是近界段几何构型的病态化（\(\boldsymbol{C}_{tot}\) 变小）而非干扰本身。由此可得本判据的\textbf{确切边界}：在\(\Delta t=0.02\) s 下，VGPO偏置（16.7$\sim$73.3 m/s）引起的单步积分位置差仅0.3$\sim$1.5 m，远小于几何定位不确定度（数十米量级），故该判据\textbf{既不能提供候选级判别，也不能提供可用的干扰告警}。其价值因此体现为两点：（i）以物理一致性约束的形式给出无需人工整定尺度的量化评分与零假设经验校准的门限；（ii）通过双重计数机理说明为何不应把该证据与关联似然重复计入（图~\ref{fig:threshold}给出完整的门限敏感性曲线）；
+
+\item \textbf{异构IMM奇异子空间的处理对比}：异构多模型近似Chernoff融合中，CV分量的加速度子空间协方差严格秩亏（其过程噪声在加速度维为零），故融合前须对该奇异分量作出处理。本文在同一场景、同一反馈配置下比较三种口径（MC=50）：传统微小数值抖动（$\epsilon=10^{-2}$）、机动包络先验标定（$a_{\max}=8g$）与\textbf{丢弃退化分量（对照处理）}。以数值抖动口径为基准（位置RMSE中位值10.41 m（三重线性）/10.37 m（四重混合）），\textbf{丢弃退化分量}在两种场景下均给出小幅但显著的位置改善（$-0.070$ m，95\%CI $[-0.111,-0.029]$；$-0.093$ m，95\%CI $[-0.153,-0.036]$），并给出更低的加速度RMSE（25.50/25.51 m/s$^2$ 对 27.22/27.19），故本文将其列为对照实现；机动包络标定的位置配对差为$-0.035$ m（95\%CI $[-0.070,-0.001]$，三重线性下显著）与$-0.044$ m（95\%CI $[-0.094,+0.004]$，四重混合下\textbf{跨零}），其定位为保证融合数值良态的正定化处理，同时是\textbf{本文主结果分布式臂所采用的口径}（本文全部消融、一致性统计与反馈口径均在该处理下成套产出且互相自洽；与丢弃处理之差约0.3\%$\sim$0.5\%，不影响任何结论）。三种口径下加速度估计均远低于真值幅度：评估窗平均$|\hat a|$在包络标定口径为\textbf{6.38} m/s$^2$、数值抖动口径为\textbf{1.99} m/s$^2$（真值平均$|a|=19.65$ m/s$^2$，即仅恢复10\%$\sim$33\%；10次蒙特卡洛诊断）。该压制的机理是：CV分支的加速度分量恒为零，而全局矩匹配$\bar{\boldsymbol x}_f=\sum_m\mu_{f,m}\hat{\boldsymbol x}_{f,m}$按模式概率加权，故每经一次坍缩回灌，加速度即被稀释为$(1-\mu_{f,\mathrm{CV}})\approx2/3$；以$T_{\mathrm{fb}}=5$步为周期反复重置后，理论稳态保持率约0.33，与实测0.325吻合。改用第~\ref{sec:feedback}~节的分模式回灌（每个模型回灌自身的融合分支）可把该比值提高到\textbf{0.53}、加速度RMSE由26.82降至25.43 m/s$^2$，但位置精度未改善（表~\ref{tab:jointdrag-fusion}：10.53 m对10.64 m），且模态预测的Brier技巧分数反而更差（第8条），故本文主结果仍采用坍缩回灌，并把\textbf{加速度幅值被系统性低估}列为已知局限。需要如实说明的是：传统逐候选独立加噪假设（逐候选独立加噪的对照口径）下包络标定曾给出$-0.28$ m 的显著位置改善，该差异属量测合同口径；
+
+\end{enumerate}
+
+\noindent\textbf{（二）反馈、融合与滤波器一致性}\par
+\begin{enumerate}\setcounter{enumi}{2}
+\item \textbf{反馈参数消融（图~\ref{fig:ablation}(b)(c)与表~\ref{tab:ablation_fb}）}：以硬回灌（$\lambda=1,\kappa=1$，位置RMSE中位值10.53 m，两两顺序ACF口径）为基准，无反馈基线恶化至11.80 m（配对差$+1.93$ m，95\%CI $[+1.35,+2.53]$）；固定$T_{\mathrm{fb}}=5$、将膨胀系数增至$\kappa=4$与$\kappa=16$时位置中位值迅速恶化至20.09 m与28.00 m（配对差$+9.42$与$+17.47$ m，95\%CI 均不跨零），证实膨胀回灌在本场景下单调有害；软回灌$\lambda=0.5$与$\lambda=0.25$相比$\lambda=1$亦无改善（三重线性配对差$+0.04$与$+0.09$ m，95\%CI均不跨零；强污染场景$+0.02$（CI跨零、无显著差异）与$+0.07$ m），所测试配置中未观察到部分回灌优于完全重置的证据，但该结果不是预设界值下的非劣效性结论； \textbf{融合顺序敏感性}：三种平台融合顺序（$M_1M_2M_3$、$M_2M_1M_3$、$M_3M_2M_1$）的位置RMSE中位值分别为10.58、10.58、10.68 m。其中前两种顺序逐位相同，原因是$w=0.5$时两两近似Chernoff融合对两个输入可交换；第三种顺序与前者差异不显著（配对差$+0.021$ m，95\%CI $[-0.203,+0.219]$）。整体而言顺序影响不超过0.10 m，在本文对称场景下不构成主要误差来源，但当平台精度显著不对称时仍宜改为一次性多源融合或按精度分配指数权重；
+
+\item \textbf{融合方式与反馈的2×2因子对照（表~\ref{tab:factorial}）}：为分离估计级融合方式与反馈机制的独立贡献及其交互，在三重线性与四重混合场景下各做$\{$CI\,/\,ACF$\}\times\{$无反馈\,/\,有反馈$\}$的2×2对照（MC=50）。结果表明：\textbf{反馈是位置精度的主要来源}（主效应$-2.093$ m，95\%CI $[-2.738,-1.478]$（三重线性）与$-2.304$ m，95\%CI $[-2.886,-1.742]$（四重混合），均不跨零）；\textbf{模式条件融合下的ACF与CI位置差异$<0.01$ m}（融合主效应$-0.007$ m，95\%CI $[-0.010,-0.005]$与$-0.007$ m，95\%CI $[-0.009,-0.005]$；因样本量大而统计可区分，但效应量不足$0.1\%$，不作非劣效结论）；位置维交互项为$-0.002$与$-0.001$ m（CI 跨零），速度维交互$+0.129$/$+0.117$ m/s、加速度维$-0.032$/$-0.062$ m/s$^2$。这说明两因素的贡献基本可加、交互可忽略。
+
+\textbf{融合结构的消融（新增）}：为定位旧口径ACF精度劣势的成因，本文在同一合同（MC=50）下比较了四种ACF融合结构：（a）两两顺序融合（有效指数$1/4,1/4,1/2$）相对CI的位置配对差为$+0.323$ m $[+0.244,+0.408]$与$+0.281$ m $[+0.196,+0.368]$；（b）对称顺序权重（第$r$轮$w_r=r/(r+1)$）与（c）三源一次式融合均给出$10.22$/$10.42$ m，与CI持平——即\textbf{顺序融合的权重不对称几乎解释了ACF相对CI的全部精度差距}，而非多模态结构本身的代价；（d）本文最终采用的模式条件融合（式~\eqref{eq:mode-cond}）给出$10.24$/$10.44$ m（配对差$-0.008$，效应量不足$0.1\%$），且融合分量数由27降为3、单帧耗时由7.4/9.5 ms降至5.3/7.4 ms（CI为5.1/7.2 ms）。另测得按累计误差预算的分量剪枝在该场景为空操作：27个分量的权重近均匀（最大4.5\%、最小3.0\%），$\delta=3\times10^{-2}$仅丢弃约3\%的累计质量（配对差$+0.001$，95\%CI 跨零，即不显著）。本文因此把ACF定位为\textbf{可复用多模态信息的融合骨架}（完整保留IMM的机动模态概率与分量结构，第~\ref{sup:acf}~节）：其位置精度与CI的差异不足0.1\%，基本消除原顺序ACF的精度劣势；该差异在统计上可区分（CI不跨零）但实际效应可忽略，本文不作非劣效结论；估计级通信量约为CI的3倍、原顺序ACF的1/3；模态信息可复用但尚无已证实的模式预测收益；\textbf{自适应标量降权为何不采用}：本文还测试了按逐机$q_{\min}$对融合指数做标量降权（\(q_{s,\min}\le7\)时严格退化为等权；受扰节点自动降权）。在$[0.5,2.0,1.0]$非对称场景下它与等权几乎无差（11.06 m对11.02 m），但在\textbf{单节点偏置}场景（节点2自$t=12$ s起叠加150 m距离与60 m/s多普勒偏置，10次蒙特卡洛）下，位置RMSE由等权的9.4 m\textbf{劣化至16.7 m}（后段8.4 m对19.7 m）；本文未测试更高偏置档位。机理是：标量降权在压低径向污染的同时，把该节点\textbf{未被污染的角度约束}一并丢弃，而前端双通道门控与PDA本已把偏置候选拒之门外，无需再降权。该对照说明\textbf{“通道解耦降权”的动机在本框架下并不成立}——真正需要解耦的是\emph{是否}降权，而非降权的维度；故本文不采用自适应标量降权。 \textbf{滤波器一致性统计（表~\ref{tab:consistency}）}：为定量回应"估计级反馈的协方差一致性"问题，表~\ref{tab:consistency}给出各臂的归一化估计误差平方统计量（ANEES9/ANEES3）、归一化新息平方统计量（INIS）与经验95\%覆盖率（位置95\%椭球判据$\chi^2_{3,0.95}=7.815$）。理论基准为ANEES9$\approx$9、ANEES3$\approx$3、INIS$\approx$名义自由度（集中式12、分布式逐平台4）、覆盖率$\approx$0.95，统计量自第2帧起在全时域、全$MC=50$种子上平均（表中各分布式臂与本文方法采用相同的反馈配置$T_{\mathrm{fb}}=5,\kappa=1$，故CI融合臂为"有反馈"口径；无反馈参照由"本文方法（无反馈对照）"行的ACF臂给出）。结果表明：（i）"无门控基线"臂严重过度自信（ANEES3=17.89/16.84，覆盖率仅0.316/0.365）；（ii）标准PDA关联在位置维度\textbf{过度自信}（ANEES3=4.23/5.31，覆盖率0.853/0.776）；（iii）本文方法与无反馈对照臂则\textbf{过度保守}（ANEES3=1.36/1.72 与 1.31/1.57，覆盖率0.998/0.994 与 0.999/0.997），即融合输出的协方差大于实际误差离散度。关于其成因，本文用专门归因实验（第7条）检验了两类候选来源：\textbf{机动包络标定并非主因}——关闭该标定（$a_{\max}\to\epsilon=10^{-2}$）或改为丢弃退化分量时，ANEES3仅由1.42变为1.46/1.42（四重混合由1.70变为1.73/1.70，变化均小于3\%）；结果与保守融合机制的预期性质相符，且\textbf{无反馈}对照臂也呈现保守现象；但这些对照尚不足以唯一确定全部成因，也不能据此排除反馈及其他建模近似的影响。同时各臂的INIS均低于名义自由度（集中式10.11/10.05对12，分布式3.26/3.24对4），与协方差过度保守同向。这些经验统计只能描述所测条件下的协方差表现，不能单独证明反馈的协方差一致性或唯一的收益机理；\textbf{其协方差输出偏保守}，第7条给出有明确统计对象、适用条件与有限样本保证的校准方法。需要限定的是，该分布无关校准在PDA与CI臂上给出；ACF臂的协方差统计见表~\ref{tab:consistency}，但未单独重做校准，故不把该保证外推到ACF输出；
+
+\end{enumerate}
+
+\noindent\textbf{（三）边界验证、开销与负结果}\par
+\begin{enumerate}\setcounter{enumi}{4}
+\item \textbf{非对称干扰对照（检验第~\ref{sec:setup}~节(3)的对称性假设）}：将三架无人机的干扰幅度设为\([0.5,2.0,1.0]\)（相对主实验的对称口径；三重线性场景，MC=20），位置RMSE中位/均值为：无门控基线17.81/18.03 m、集中式PDA 13.83/13.84 m、单机独立处理24.24/24.41 m、CI融合12.54/12.41 m、本文方法\textbf{12.33/12.25 m}；本文方法相对集中式PDA的配对差95\%CI为$[-1.991,-1.162]$（不跨零；两两顺序ACF口径，未在模式条件融合下重跑）。可见在平台间欺骗参数不一致时，所提方法仍显著优于无多机融合的基线，说明第~\ref{sec:setup}~节(3)的对称干扰设定并非方法有效性的必要条件。
+
+\item \textbf{低采样率体制下的整链对照（检验第~\ref{sec:single-channel}~节的可分辨边界）}：把雷达报告率降为1/10（\(\Delta t=0.2\) s）与1/50（\(\Delta t=1\) s），在同一场景与候选数据上做等间隔抽样（滤波器按各采样率重新构造\(F/Q\)，一致性门限按该采样率下的零假设经验0.99分位标定），比较不做筛检的基线、论文口径的\textbf{候选级}筛检（\(MC=20\)）与新增的\textbf{组合级}筛检（只保留\(q^{\,c}\le T\) 的组合，候选须出现在至少一个被保留组合中）。位置RMSE中位值/均值为：\(\Delta t=0.02\) s 时9.33/9.49 m（筛检配对差$-0.001$ m，近似无操作）；0.2 s 时23.56/23.46 m（候选级与组合级均为$+0.008$ m，95\%CI $[+0.003,+0.015]$，\textbf{显著轻微更差}）；1.0 s 时36.70/36.83 m（$+0.011$ m，95\%CI $[-0.062,+0.090]$，跨零）。即在三种采样率下位置域筛检\textbf{均不改善端到端精度}；组合级口径与候选级口径结果一致，原因是其判别目标仍是候选本身——组合级统计量只能指示"存在不自洽组合"，无法指认应剔除哪一条候选。该结果与第~\ref{sec:single-channel}~节的多步边界分析（候选级判别在所测试的积分间隔与条件下不可行、组合级告警需\(K\Delta t\gtrsim1\) s）相互印证； \textbf{计算与通信开销}：本文方法的分量集中在两处——位置域一致性检验需枚举$M^3$个跨机候选组合（三重干扰64个、四重干扰125个），实测每帧门限评分耗时中位值为2.0 ms（64组合）与5.3 ms（125组合）；在此之上的滤波与融合部分，逐帧总耗时（单机Python实现墙钟计时，仅作量级对照，非实时性声明；1000帧平均，修正了早期诊断中把1484帧误按1000帧分摊导致的约1.5倍高估）为：无一致性筛检、无融合的集中式基线约1.4 ms，单机独立处理约5.3$\sim$8.9 ms，CI融合约5.1$\sim$7.2 ms，ACF两两顺序融合约7.4$\sim$9.5 ms，本文采用的模式条件融合约5.3$\sim$7.4 ms（与CI同级）。通信方面，量测级广播为384 B/480 B每帧；估计级通信按统一字段核算：float64、每分量1个权重+9维均值+45个对称协方差元素（\(55\times8=440\) B），另加4 B分量标签与32 B报文头；上行每节点1个报文，下行由融合中心广播并只计1次。CI约1.90 kB/帧（4个分量），模式条件ACF约5.46 kB/帧（12个分量，为CI的2.9倍），原顺序ACF约16.1 kB/帧（36个分量，为CI的8.5倍；其分量数为CI的9倍，差额来自报文头按报文而非按分量计），逐项见表~\ref{tab:comm}。上述数值仅为每帧数据量，不能直接解释为单位时间带宽；实际需求还取决于报告频率、协议开销与链路条件，本文未作完整链路验证。
+
+
+
+\item \textbf{参考下界（PCRLB）口径诊断}：线性化递推PCRLB（单Singer）为9.87 m（IMM混合口径10.20 m）。在共享噪声模型下，本文方法与集中式PDA的位置误差（10.24 m与10.56 m）分别高出该参考下界约4\%与7\%，即不再出现逐候选独立加噪的对照口径下"估计误差低于参考下界"的反常。该反常的成因已由专门诊断确认为\textbf{量测合同口径}：传统逐候选独立加噪假设令干扰候选与真实候选的距离/角度量测同源却各自独立加噪，使门控内实含$M$个相互独立的同一几何量测副本并被标准PDA平均，从而人为压低误差。该解释由"仅选真候选"臂反证——逐候选独立加噪的对照口径下其位置RMSE为10.54 m（位于下界\textbf{之上}且劣于标准PDA的8.73 m），而共享合同下反而\textbf{优于}标准PDA（10.15/10.09 m 对 10.56/10.68 m）。另一条证据是：仅改动机动包络假设（$a_{\max}$由$8g$降为$4g$）时下界仅由9.87 m变化到9.42 m，说明该下界由几何与量测精度主导、对过程噪声假设不敏感。因此本文把PCRLB作为\textbf{量级参考}而非严格可达性下界使用。 \textbf{协方差过度保守的归因与分布无关校准（新增）}：第4条指出分布式融合输出的协方差偏保守。为定位成因，本文在同一场景、同一种子下比较了三种口径的平均ANEES3：机动包络标定口径（$a_{\max}=8g$）为1.36/1.72，关闭该标定（$a_{\max}\to\epsilon=10^{-2}$）为1.43/1.78，改为丢弃退化分量为1.37/1.72——三者差异不超过约5\%，提示\textbf{所比较的机动包络处理差异不足以解释全部保守现象}；现有对照尚不能唯一确定其来源。针对该保守性，本文给出\textbf{分布无关的协方差尺度校准}：取轨迹级统计量$S_j$为第$j$条轨迹上位置子空间$\text{NEES}_3$的0.95分位，在校准轨迹集（$n=40$）上按已有秩分位校准思路\cite{angelopoulos2022}取标准秩分位数$\hat q=S_{(k)}$（$k=\lceil(n+1)(1-\alpha)\rceil=39$，$\alpha=0.05$）取阈值，并令位置子空间协方差按$c=\hat q/\chi^2_{3,0.95}$缩放。需要说明缩放的具体实现：若仅将$9\times9$协方差的位置块乘以$c$而保持位置--速度交叉协方差不变，则一般会破坏半正定性（例如$\boldsymbol P=\begin{bsmallmatrix}1&0.9\\0.9&1\end{bsmallmatrix}$仅缩放左上元素至$0.682$时行列式为$-0.128$）。为此本文采用\textbf{合同变换}$\boldsymbol P'=\boldsymbol D\boldsymbol P\boldsymbol D$，其中$\boldsymbol D=\mathrm{diag}(\sqrt{c}\,\boldsymbol I_3,\boldsymbol I_6)$：位置块恰被缩放为$c\boldsymbol P_{pp}$，交叉项按$\sqrt{c}$同比例缩放，半正定性与相关性结构均保持不变。该式在分块序下成立；若按式~\eqref{eq:word-1}的逐轴序，则$\boldsymbol D=\mathrm{diag}(\sqrt{c},1,1,\sqrt{c},1,1,\sqrt{c},1,1)$。本文代码与全部数值结果均采用分块序。由轨迹可交换性可得\textbf{有限样本保证}$\Pr\{S_{\text{new}}\le\hat q\}\ge1-\alpha=0.95$。在文中划作测试角色的轨迹集（$n=20$）上：集中式PDA因\textbf{过度自信}而需放大（$c=2.24/2.70$），帧级覆盖率由0.857/0.771修正至0.988/0.991、轨迹达标率由0.05/0.00升至1.000；分布式CI+反馈臂因\textbf{过度保守}而需收紧（$c=0.682/0.886$），收紧后帧级覆盖率仍为0.987/0.990。同一程序在两个相反方向上同时生效，且保证是\textbf{轨迹级}的（帧级覆盖率受帧间时间相关影响，仅作经验报告）。需要说明的是，该保证以校准轨迹与测试轨迹的交换性及预先固定的评分规则等条件为前提。\textbf{轨迹编号与角色}：校准集为MC=0$\sim$39（$n=40$），测试集为MC=40$\sim$59（$n=20$），两者\textbf{互不重叠}，且在测试前已冻结$\hat q$与缩放系数；但两者与主结果（表~\ref{tab:rmse_main}，MC=0$\sim$49）的种子\textbf{部分重叠}（校准集全部、测试集中的MC=40$\sim$49），故该保证应理解为\textbf{同一场景分布内、以轨迹为单位的覆盖率保证}，\textbf{不构成跨场景的独立验证}；若需后者，应在未参与任何调参的种子上重新标定。
+
+\item \textbf{时序可辨识性边界（新增）}：本文进一步检验"是否可用历史观测序列改进候选判别"，以界定不做时序学习模块的依据。以不做筛检的集中式PDA臂的逐步IMM混合预测为参考，对每条候选构造\textbf{当前帧}特征（白化新息、标准化多普勒残差、位置域评分）与\textbf{严格历史窗}特征（截至$k-1$、窗长$W$帧的滑窗均值/标准差/斜率、argmin频率），并按轨迹留出（前12条训练/后8条测试）评估判别力（MC=20，$W=50$帧$=$1 s）。结果：（a）\textbf{位置域组合统计量在任何窗长下AUC恒为0.500}（$W=5\sim250$帧），与第~\ref{sec:single-channel}~节"该判据不提供候选级判别"的结论逐位一致；（b）候选级新息的\textbf{时间聚合确实带来显著判别力}——白化新息的窗均值AUC达0.758/0.719（95\%CI $[0.752,0.764]$/$[0.715,0.724]$），argmin频率达0.674/0.636，随窗长单调上升至$W=250$帧的0.871/0.840，且"仅当前帧"与"当前帧+历史"的逻辑回归AUC由0.633/0.635 提升至0.653/0.673（配对差CI不含零）。但（c）该判别力的实现\textbf{依赖跨帧身份关联}：改用不依赖候选序号、(α,β,$V_D$)空间归一化最近邻关联重建历史链后，关联正确率仅0.42/0.37（模糊率0.62/0.61），链历史联合判别力退化至0.513$\sim$0.563（远低于0.60判据）。机理是：干扰通道的偏置幅度（16.7 m/s）本就不大于多普勒量测噪声（$\sigma_d=20$ m/s），且各通道在每个拖引周期重启点附近归零，此时假目标与真目标在量测上重合、\textbf{身份本身不可辨}。因此本文的结论是：\textbf{时序信息存在，但在本场景的观测形态下需以"关联--可靠性联合建模"为前提才能利用}，单纯增加一个时序可靠性网络并不能凭空恢复需经关联才能取得的判别信息；该方向留作后续工作。 \textbf{高斯混合多模态结构的下游价值检验（负结果）}：本文在高斯单分布级融合（CI）之外采用高斯混合级融合（ACF）的理由是其\textbf{完整保留了IMM的机动模态概率与分量结构}（第~\ref{sup:acf}~节）。为检验该被保留的结构是否带来可用的机动模式预测收益，本文由融合输出的分量模态来源聚合出"网络级机动模式概率"\(p(m_{k+h}\mid Z_{1:k})\)（机动/非机动门限取\(0.5\times4g\)），并与真值机动状态比较（MC=20）：ACF网络级口径（模式条件融合）的模式概率与真值加速度模长的Spearman相关仅0.064/0.115（三重线性/四重混合），按状态转移概率外推的Brier技巧分数（\(h=1\)）为$-0.130$/$-0.129$，即\textbf{不如恒报机动帧基础比例（0.501）}；即使采用集中式IMM口径（10次蒙特卡洛补充检查），相关也仅为0.082/0.106、Brier技巧分数为$-0.0226$/$-0.0115$（同为负值）。因此本文如实报告：在本场景下\textbf{保留多模态结构不产生可用的下游模式预测收益}，ACF的定位应限于"完整保留机动模态概率与分量结构、其多模态信息可被后续研究复用"的融合骨架，而非已被证实的模式预测能力来源。需要指出，上述Brier技巧分数按原始\(p_{\mathrm{man}}=\mu_{\mathrm{CA}}+\mu_{\mathrm{Singer}}\)计算，而模型集含1个CV与2个机动模型，其无信息先验为2/3，高于机动帧基率0.501，因而产生约\(-0.11\)的恒定负偏置。按先验赔率去偏\(p_{\mathrm{cal}}=p_{\mathrm{man}}/(2-p_{\mathrm{man}})\)后，10次蒙特卡洛下BSS为\(+0.003\)/\(+0.006\)（三重线性/四重混合），即\textbf{Brier负值主要来自先验基率失配而非信息缺失}；但Spearman仍仅0.066/0.117，排序信息弱。将转移矩阵改为匹配秒级驻留的\(p_{ii}=0.996\)亦未改善该相关性（0.063/0.104）。因此模式概率经去偏后Brier可达中性，但\textbf{尚无可用的机动预测增益}，ACF仍定位为结构接口。
+
+为检验该负结果是否由单高斯坍缩回灌导致，本文实现了分模式一对一回灌：把融合的第\(m\)个模式条件估计回灌到本地第\(m\)个分支，并以融合模式权重重置\(\mu\)。20次蒙特卡洛下：位置RMSE由10.45/10.52变为10.49/10.58 m（略差0.04\(\sim\)0.06 m）；Spearman由0.064/0.115升至0.130/0.237，但Brier技巧由\(-0.130\)/\(-0.129\)变为\(-0.217\)/\(-0.218\)（反而更差；判据为Spearman$>0.3$且BSS$>0$，故仍远未达到可用水平）。因此模式概率的短板并非坍缩回灌所致，而在于模式条件分量本身的可分性不足；分模式回灌不作为推荐配置。
+
+\end{enumerate}
+
+\begin{table}[htbp]
+\centering
+\caption{分布式估计级反馈机制的参数边界消融（位置RMSE，单位：m；基准与无反馈行基于两两顺序ACF口径）}
+\label{tab:ablation_fb}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{llccccc}
+\toprule
+实验场景 & 反馈参数配置 & 中位值 & 均值$\pm$标准差 & 最小值$\sim$最大值 & 配对差均值 vs 基准（95\%CI） & 判定\\
+\midrule
+\multirow{6}{*}{三重线性}
+ & 无反馈 & 11.80 & 12.50$\pm$2.54 & 8.87$\sim$18.78 & $+1.93\ [+1.35,+2.53]$ & 显著更差\\
+ & \textbf{硬回灌（$\lambda=1,\kappa=1$）} & \textbf{10.53} & \textbf{10.57$\pm$1.09} & \textbf{8.45$\sim$13.62} & \textbf{0（基准）} & \textbf{最优}\\
+ & 软回灌（$\lambda=0.5$） & 10.56 & 10.61$\pm$1.09 & 8.54$\sim$13.51 & $+0.04\ [+0.02,+0.06]$ & 显著更差\\
+ & 软回灌（$\lambda=0.25$） & 10.58 & 10.66$\pm$1.10 & 8.63$\sim$13.52 & $+0.09\ [+0.06,+0.12]$ & 显著更差\\
+ & 膨胀（$\kappa=4$） & 20.09 & 19.99$\pm$0.83 & 18.14$\sim$21.71 & $+9.42\ [+9.18,+9.66]$ & 显著更差\\
+ & 膨胀（$\kappa=16$） & 28.00 & 28.04$\pm$0.94 & 25.90$\sim$30.30 & $+17.47\ [+17.17,+17.78]$ & 显著更差\\
+\midrule
+\multirow{3}{*}{强污染场景}
+ & \textbf{硬回灌（$\lambda=1,\kappa=1$）} & \textbf{10.56} & \textbf{10.82$\pm$1.04} & \textbf{8.78$\sim$13.90} & \textbf{0（基准）} & \textbf{最优}\\
+ & 软回灌（$\lambda=0.5$） & 10.79 & 10.85$\pm$1.03 & 8.74$\sim$13.75 & $+0.02\ [-0.01,+0.06]$ & 无显著差异\\
+ & 软回灌（$\lambda=0.25$） & 10.75 & 10.89$\pm$1.03 & 8.85$\sim$13.73 & $+0.07\ [+0.02,+0.11]$ & 显著更差\\
+\bottomrule
+\end{tabular}}
+\end{table}
+
+
+
+
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.80\linewidth]{latex/media/fig7_ablation.png}
+\caption{核心机制消融：(a) 检验域与加权形式；(b) 反馈膨胀系数$\kappa$；(c) 回灌率$\lambda$边界}
+\label{fig:ablation}
+\end{figure}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.76\linewidth]{latex/media/fig_threshold.png}
+\caption{位置域一致性统计量的门限敏感性（零假设经验校准，修正噪声口径）：真实候选误剔率、虚假候选保留率与全剔除放行率随门限$T$的变化，虚线分别标出$\chi^2_{3,0.99}=11.34$与本文采用的$T=48$}
+\label{fig:threshold}
+\end{figure}
+
+
+
+\subsection{锚定与逐种子确认的详细审计}\label{sup:seed-audit}
+本文将“盲锚定”定义为不使用真值标签；它不等于无信息先验：\texttt{combo+v}仍使用候选编号跨帧/跨平台一致、拖引前滤波预测速度\(V_{\mathrm{ref}}\)与已知事件起点。表~\ref{tab:anchor} 显示三点。其一，无距离偏置的场景对锚定方式不敏感。其二，\textbf{单参照锚定各有盲区}：\texttt{pred}在相干共同模态下已被拖引俘获（32.30 m）；\texttt{geo}虽不受径向平移污染，但径向不确定度达数百米，在差分模态下失效（35.69 m）。其三，\textbf{组合搜索锚定的表现与门控形式强耦合}：全组合逐帧锚定（\texttt{combo}）在硬门控下为23.54 m，在混合门控下因误选被连续权重放大而劣化至28.82 m——两种门控的差异可由同一批种子的对照实验复现（全组合+硬门控23.54 m，全组合+混合门控28.82 m，对角累积23.82 m）；差分臂11.31 m与\texttt{index}的11.14 m接近。机理是combo常存在多个角度残差相近的"自洽三元组"。但改用对角组合跨帧累积（全组合逐帧28.82 m→对角累积23.82 m）并加入式~\eqref{eq:combo-vpen}的速度惩罚与T1预筛后，20次蒙特卡洛下相干共同臂降至\textbf{11.16 m}、差分11.19 m、非相干11.01 m、传统VGPO 10.84 m。逐MC配对差为：共同 $-0.009\ [-0.086,+0.045]$、非相干 $+0.232\ [-0.094,+0.775]$、传统VGPO $+0.021\ [-0.067,+0.109]$，均跨零；仅差分臂 $+0.050\ [+0.012,+0.094]$ 不跨零。因此共同臂只能表述为“未检测到与\texttt{index}的均值差异”，不能称“完全闭合”或“达到上界”；四臂的$>50$ m发散计数均为0/20。锁定正确率20/20，锁定时刻见第~\ref{sec:association}~节；独立种子确认见表~\ref{tab:heldout}。
+
+因此，\textbf{门控形式与锚定可靠性存在交互}：参考可靠（\texttt{index}/oracle）时混合门控在RMSE与ANEES上更优；无速度惩罚的逐帧combo在盲锚定下硬门控更稳健。加入速度惩罚后，盲锚定下混合门控也达到11.16 m（与oracle的配对差95\%CI跨零），故推荐配置为"速度惩罚\texttt{combo+v}+混合门控"。作为对照，无速度惩罚的多帧combo累积虽能把锁定正确率提到20/20，共同臂仍为23.82 m——差距的根源是早期窗口的参考不可辨，而非累积长度；速度惩罚利用"位置连续、速度跳变"把该窗口的锁定提前到0.2 s，才真正闭合了盲锚定差距。
+
+\texttt{combo} 的代价出现在非相干臂（11.90 m对10.77 m）：该场景下各候选的距离差异与角度基准的径向不确定度同量级，组合搜索偶有误选；加入T1预筛（\(|Z|\le3\sigma_Z\)，假候选被单站检验挡在锚点竞选池外）后降至11.01 m。但非相干拖引恰是检验一单独即可检出（12\(\sim\)26\(\sigma\)）且无需任何锚定的情形。因此实用上可将两个检验按互补方式组织：\textbf{T1 覆盖非相干情形（无需锚定），T2 配合 \texttt{combo} 锚定覆盖相干情形（不使用真值标签）}——二者均不使用真值标签；T1依赖积分窗内编号一致；T2配合的全组合逐帧锚定不需要跨平台编号一致，而端到端的对角累积（\texttt{combo+v}）需要编号一致并依赖\(V_{\mathrm{ref}}\)（该编号条件可放宽为全组合累积，代价见第~\ref{sec:association}~节）。二者各自的作用区域由运动学自洽混合系数\(\rho\)自然划分。这一限定不影响第~\ref{sec:theory}~节统计量本身的性质与第~\ref{sec:test-results}~节的检出率结论，后者是逐候选的检测性能，不依赖锚定方式。
+
+
+
+\paragraph{结果合同说明} 表~\ref{tab:rmse_main}--\ref{tab:consistency}属于传统VGPO合同；表~\ref{tab:rgpo_main}--\ref{tab:jointdrag-fusion}属于联合拖引合同，且参考信息与样本规模不同。各表的结果只能在其注明的合同内解释。仿真采用理想接近航迹生成器（比例导引形式）与较良态的民用多智能体观测几何；模型分歧、观测条件变化下的独立验证留作后续工作。
+
+
+
+表~\ref{tab:jointdrag-fusion}把融合结构对照从传统VGPO扩展到联合拖引合同：前端统一为双通道混合门控+速度惩罚\texttt{combo+v}。四种场景下CI、模式条件ACF与分模式回灌均处于10.5\(\sim\)11.0 m。逐MC配对：ACF$-$CI的均值差为$-0.007\sim+0.000$ m，95\%CI均跨零；其跨MC p90差为$-0.011\sim+0.004$ m（均小于0.02 m）。分模式回灌较坍缩回灌差$+0.116\sim+0.226$ m，95\%CI均不跨零。这表明：（i）前后端串联后，模式条件ACF在联合拖引下未检测到与CI的均值差异（95\%CI跨零；确认集见表~\ref{tab:heldout}）；（ii）分模式回灌不是必需项，坍缩回灌已足够。
+
+
+
+表~\ref{tab:heldout} 给出参数冻结下的独立种子确认。三点结论：
+（i）\textbf{传统VGPO与相干共同臂的方向与发现集一致}——盲锚定与\texttt{index}的配对差95\%CI跨零（共同 $+0.004\ [-0.007,+0.017]$），传统VGPO/共同/非相干三臂的ACF$-$CI均值差绝对值不超过0.009 m（差分臂的$-1.95$ m由MC=115单次失效主导，不构成一般优势）；
+（ii）\textbf{差分与非相干臂各出现1/20的尾部失效}，且两者\textbf{均集中在同一种子（MC=115）}。逐轨迹核查给出三条可分辨的事实：其一，该种子上三种融合结构\textbf{同时发散}（非相干臂CI/ACF/模式条件ACF为124.9/124.9/125.0 m；差分臂为166.4/127.3/166.3 m），故失效与\textbf{融合结构无关}；其二，同一试验的\texttt{index}（身份参考锚定）臂在该种子上仍为11.6/12.2 m，\textbf{并未失效}；其三，其余19个种子在全部方法上均无$>50$ m样本。因此该尾部失效应归因于\textbf{盲锚定在MC=115上的误选}（前端），而非场景本身的不可解、亦非速度惩罚或融合结构所致。本文实现了两条针对性修补并做了端到端测试：其一\textbf{双帧确认}（连续两次抽样给出同一 \(c^\star\) 才锁定，消除单次偶发误选）；其二\textbf{组合代价滑窗}（对最近 $W=3/5$ 个抽样取均值，压制候选间私有噪声）。测试结果为负：在 MC$=0\sim9$ 的四个臂上，两条修补相对基准的逐 MC 配对差均不超过 $0.1$~m（其中传统VGPO臂的差 $<0.01$~m，其余臂 $95\%$CI 跨零），\textbf{在 MC=115 上两臂数值完全不变}（非相干 125.0~m、差分 116.4~m）。因此该失效\textbf{不是锚定判决的边际性所致}——误选一旦发生便是"自信的"误选，确认与平滑都无法纠正。逐帧权重诊断进一步把机理定位到\textbf{参考}而非\textbf{判决}：\(t\ge10\)~s 后真候选的门控权重由 1.00 塌缩到 0（\(k=500\sim600\) 中位 0.20，\(k\ge600\) 为 0），即参考一旦落在自洽的假回波组合上，真候选相对该参考的残差反而超限而被剔除；这与"锚定编号选错"不同，也解释了为何身份参考（\texttt{index}）臂在同一试验上仍为 11.6/12.2~m。据此本文另测试了第三条修补——\textbf{参照完整性监控}（锁定后若参照候选在 T1 上连续超限则解除锁定并禁用该候选）——同样未能改变该种子的结果。三条修补的负结果共同说明：该失效需要在\textbf{参考构造}层面（如何产生一个不被污染的参照）解决，而非在判决规则层面微调。据此本文试行了第四条修补\textbf{以 T1 干净集重建参考}（只在 $|Z|\le k\sigma_Z$ 的候选上枚举组合、据此三边定位得参考）：在独立种子 MC=115 上它\textbf{未能改变该种子的结果}（非相干 125.0~m、差分 116.4~m，与基准逐位相同；因为该种子在拖引起始后约 0.12~s 即锁定，而该修补只在未锁定阶段替换参考）；在 20 次蒙特卡洛（MC=0\(\sim\)19）下，非相干/差分两臂的均值由 11.01/11.19~m 变为 12.40/11.35~m，相干共同臂由 11.16~m 退化至 33.05~m（2/20 发散）。因此该修补既未修复尾部、又引入新代价，本文不采用。本文进一步尝试以 T1 的“候选-平台不干净占比”作为可辨性判别器（初衷是仅在 T1 有效时启用上述修补），但该判别器\textbf{无法识别 MC=115 的误锁}：逐帧状态显示该种子实际锁定在第 2 号候选上（\(k\approx506\)，\(t\approx10.1\)~s），而被误锁通道的拖引较弱，其 T1 签名与正确锁定不可分——2 s 窗内累积的失配不足以越过 \(3\sigma_Z\) 门限。故该修补暂不可用；这一负结果同时把失效边界说得更清楚：\textbf{尾部风险来自“弱拖引通道上的误锁”，而 T1 对弱拖引本身的可辨性有限}。该失效作为\textbf{可辨识性边界}的直接体现予以保留。本文据此不以均值作为该两臂的主要结论，而以下列中位数与配对差CI为限；均值被单次失效主导，中位数仍为10.7$\sim$11.8 m；
+（iii）差分臂 $\Delta$ 的95\%CI不含零（$+5.23\ [+0.006,+15.7]$），即在该臂上盲锚定劣于上界。因此：确认集支持“共同/legacy方向一致”，\textbf{不支持“差分/非相干均值与上界持平”}；正文相应结论以中位数与配对差CI限定。
+
+\paragraph{扩展确认集（MC=300$\sim$399，$N=100$）} 20 次样本对发散概率的 95\% 上界约为 13.9\%，不足以支撑“不发散”的表述。为此在与发现集（0$\sim$19）、原确认集（100$\sim$119）均不重叠的 100 个种子上重跑同一冻结配置，结果见表~\ref{tab:mc100}。三点结论。
+
+其一，\textbf{存在四臂同时失效的样本}：种子 314 在四个臂上同时发散（74$\sim$213 m），其中包含\textbf{无任何距离偏置}的传统 VGPO 臂。该次失效与虚假量测抑制方法无关，属场景/初始化层面的离群，故表中同时给出剔除该种子后的计数。
+
+其二，\textbf{尾部失效不是零}：剔除该样本后，相干共同 1/99（95\%CI $[0.1\%,4.6\%]$）、相干差分 2/99（$[0.4\%,6.3\%]$）、非相干 2/99（$[0.4\%,6.3\%]$），即每次运行约 1\%$\sim$2\%。这与原 20 次样本的 0/20 相容，但\textbf{“0/20”不能读作“发散率为零”}；相应地，正文凡出现 0/20 之处均只作“该批 20 次中未观察到”解。
+
+其三，\textbf{混合门控抑制尾部在非相干臂上可独立复现}：同一批 100 个种子上，硬门控在非相干臂发散 5 次，混合门控 3 次，其中种子 331 与 348 由硬门控的 184.8/284.1 m 降至 10.7/11.9 m。该对照\textbf{不使用身份参考}，因而是“混合门控抑制尾部”的独立证据，与表~\ref{tab:rgpo_main} 的方向一致；同时它把该优势的适用范围限定在\textbf{非相干（T1 可辨）}臂——在相干共同臂上两者发散次数相同（2/100），说明混合门控不能替代 T1 失明时的参照构造。
+
+最后必须给出方法的边界：p99 仍达 75.6 m（共同）、125.5 m（非相干）、181.3 m（差分），即\textbf{尾部被压低但未被消除}；弱拖引通道上的误锁机理（本节 (7)）仍未解决。
+
+\paragraph{误锁率、未锁率与恢复率（MC=300$\sim$399，$N=100$）} 表~\ref{tab:mc100} 只给结果，不给身份判据。为此在同一批种子上记录每次运行的锁定候选编号 \texttt{lock\_idx} 与锁定帧 \texttt{lock\_k}（候选 0 为真实回波），结果见表~\ref{tab:lock}。四个臂的锁定率均不低于 $0.99$（唯一未锁样本在非相干臂），锁定时刻中位 $10.1\sim10.8$~s（拖引起点 $t_0=10$~s）。
+
+\textbf{误锁率与失效不是同一件事}：传统 VGPO 臂误锁 3/100，其中 2 次的位置 RMSE 仍为 10.1/11.7~m——该合同下各候选几何等价，锁错无代价；非相干臂误锁 5/100，3 次发散、2 次仍为 10.7/11.9~m——T1 可辨，错误锁定被后续筛检压住；而\textbf{相干两臂 4/4 次误锁全部发散}（120$\sim$208~m）。反过来，唯一一次“未误锁却发散”的样本是种子 314，正是表~\ref{tab:mc100} 识别的场景级离群，两条独立统计互相印证。
+
+\textbf{指标撤回：}历史 \texttt{post\_drop} 由未更新的 \texttt{sel\_true} 计算；该数组只被初始化为全 False，故正确锁定样本也会得到 1.00。这些值不证明真候选被剔除，本文撤回该指标及其因果解释。锁定状态不可撤销只描述该历史基线的代码约定，不等于已测得位置误差恢复率为零；本轮未重放实验，指标保持不可用。
+
+
+
+
+
+
+
+需要界定融合结构结论的适用范围。第~\ref{sup:ablation}~节的CI/ACF对照在传统VGPO合同下完成；表~\ref{tab:jointdrag-fusion}已把该对照扩展到联合拖引合同（前端统一为双通道混合门控+速度惩罚\texttt{combo+v}+T1预筛），CI与ACF均为10.5 m级，分模式回灌略差。盲锚定的瓶颈已由速度惩罚基本闭合（相干共同臂28.82\(\to\)11.16 m，与上界11.17 m的配对差95\%CI跨零；独立种子下差分/非相干出现1/20尾部失效，不能称完全闭合）；剩余问题主要在锁定前的短窗、跨平台编号假设与受扰节点降权，后续可研究全组合累积与自适应融合指数。
+
+
+
+\subsection{净失配与混合系数可分离性审计}\label{sup:rho}
+\noindent\textbf{（7）混合系数\(\rho\)的可解释性审计}\quad 第~\ref{sec:t1}~节指出，式~\eqref{eq:t1-bound} 的门限应作用于窗平均失配速度\(\bar\delta_v\)而非拖引率本身。为在仿真器上直接检验这一点，本文构造三组对照，均取\(\dot{\Delta R}=10\) m/s、积分窗\(T=10\) s（\(L=500\)）、50次蒙特卡洛；1\%虚警门限由真值候选滑动窗零假设池的0.99分位标定（\(n=7500\)，门限\(2.53\sigma_Z\)，\(\sigma_Z=16.73\) m）。
+
+\begin{table}[H]
+\centering
+\caption{混合系数\(\rho\)与检出能力的可分离性审计（\(\dot{\Delta R}=10\) m/s，\(T=10\) s，50次蒙特卡洛；表中为1\%虚警门限下的检出率）}\label{tab:rho-audit}
+\begin{tabular}{@{}llcccc@{}}
+\toprule
+情形 & 独立多普勒偏置\(v_j(t)\) & \(\bar\delta_v\) & \(\rho=0\) & \(\rho=0.5\) & \(\rho=1\)\\
+\midrule
+C1 线性抵消 & \(2t\)（窗内积分恰等于\(\Delta R\)变化量） & 0 & 0.000 & 0.000 & 0.000\\
+C2 T1诊断口径 & \(0\) & 10 m/s & 1.000 & 0.687 & 0.010\\
+C3 零均值失配 & \(\dot{\Delta R}+30\sin(2\pi t/T)\) & 0 & 0.010 & 0.010 & 0.010\\
+\bottomrule
+\end{tabular}
+\par\vspace{2pt}{\footnotesize 注：C1的检出率样本为\(50\times3=150\)（固定窗\([0,10]\) s），C2/C3为7500（滑动窗）。C3的失配瞬时幅度为\(\pm30\) m/s，远大于C2的10 m/s。}
+\end{table}
+
+三点结论。其一，\textbf{C1与C3的检出率在三种\(\rho\)下均回到虚警底}：C1（固定窗，\(n=150\)）在三种\(\rho\)下均未观察到超限（\(0/150\)，与零期望信号一致；受样本量限制，不将其单独作为1\%分位的精确验证）；C1中距离率与多普勒偏置在多数时刻并不相同（10 m/s对\(0\sim20\) m/s），但正负失配在窗内积分恰好抵消；C3（\(n=7500\)）的检出率恒为0.010，其失配在窗口内多数时刻非零（仅个别孤立零点），但窗内积分平均为零。两者共同说明检验一检测的是\textbf{窗内净运动学失配}，既非瞬时失配，也不由\(\rho\)单独决定。其二，\textbf{只有C2（第(1)--(4)条T1诊断的候选构造，\(v_j\equiv0\)）呈现随\(\rho\)的单调下降}：该口径下\(\bar\delta_v=\dot{\Delta R}\)为常数，\(\mathbb E[Z]=(1-\rho)\dot{\Delta R}T\)仅随\((1-\rho)\)缩放，故与式~\eqref{eq:t1-bound} 一致。其三，C2同时充当\textbf{控制波形}的对照——失配波形固定、仅缩放幅度，从而把“幅度效应”与“波形效应”分离。
+
+由此需限定本文全部“检出率随\(\rho\)变化”的读数（表~\ref{tab:t1roc}、图~\ref{fig:rgpo_map}）：它们是在\textbf{固定失配波形、仅缩放幅度}的参数化下取得的，应解释为“净失配幅度减小导致检出率下降”，\textbf{不能单独归因于某种“相干性”的物理效应}。同理，本文的\(\rho\)是\textbf{受控的失配幅度旋钮}，而非经信号级验证的干扰源相干参数；模型的定位是“一族具有运动学含义的联合欺骗量测模型”（第~\ref{sec:deception}~节），其量测层的偏置由式~\eqref{eq:rgpo-couple}--\eqref{eq:rgpo-range} 直接规定，未从DRFM发射信号经接收处理链推导，故不对任意\(\rho\)作信号级真实性的断言。
+
+
+
+\subsection{分块信息量与判决时间尺度}\label{sup:information}
+该二次律可给出一个\textbf{信息量尺度}，但必须区分三个层次。其一，\(\lambda/2\) 是\emph{保留符号}的高斯投影在两假设间的单帧 KL；本文实际使用平方后的 \(q^{\mathrm{GLRT}}\)，平方映射丢失符号，由数据处理不等式只能得到 \(D_{\mathrm{KL}}(p_1^q\|p_0^q)\le\lambda/2\)，故 \(\lambda/2\) 是\textbf{上界}而非该统计量的 KL。其二，Wald 关系 \(\mathbb E[n]\approx\ln(1/\alpha)/D\) 以各帧独立、假设简单、序贯 SPRT 为前提，本文的跨帧累积与随时间变化的偏置幅度并不严格满足，故它只是\textbf{理想化尺度}，不是锁定时间的严格预测。其三，由 \(D\propto\Delta R^2\) 可解释“弱拖引通道更难”，但这只是\textbf{一致性解释}，不构成对第~\ref{sec:robustness}~节 MC=115 失效的因果证明（该样本的直接机理是参考被污染后真候选被门控剔除）。该上界的松紧可数值化：对 \(q\sim\chi^2(1,\lambda)\) 与 \(q\sim\chi^2(1)\) 数值积分，\(D_{\mathrm{KL}}(q)/(\lambda/2)\) 在 \(\lambda=10/30/100\) 时分别为 0.86/0.95/0.99——\textbf{上界在强拖引（\(\lambda\) 大）时紧}；而弱拖引通道（对 \(q^{\mathrm{GLRT}}\) 而言，早期距离分量的 \(\lambda\) 小，如第~\ref{sec:robustness}~节 MC=115 的弱通道在早期窗口 \(\lambda\approx2\)）上界明显偏松，这正是其 T1 签名（\(|Z|/\sigma\approx2\)）与正确锁定不可分的量化根源。在三种干扰臂下，\(t=12\)~s 时全通道信息量 \(D=\tfrac12\Delta\boldsymbol b^{\mathrm T}\boldsymbol M_\perp\Delta\boldsymbol b\)（已知偏置时的单帧KL；当偏置仅落在单机距离通道时退化为 \(\lambda/2\)）的中位值（3 次蒙特卡洛诊断）为相干差分队 15.7、相干共同队 9.45、非相干队 0.25，与实测锁定时间（0.80~s、3.95~s）在\textbf{排序上}一致。
+
+
+\noindent\textbf{（3）判决时间尺度。}\quad 在分块解释下，单帧可获得的身份信息量由空间块给出：\(D=\tfrac12\Delta\boldsymbol b^{\mathrm T}\boldsymbol M_\perp\Delta\boldsymbol b\)（第~\ref{sec:t2}~节；当偏置仅落在单机距离通道时退化为 \(\lambda/2\)），单位为 nat/帧。若偏置幅度已知且无多重比较，Wald 关系给出累积信息达到 \(\ln(1/\alpha)\) 所需的时间：
+\begin{equation}
+\int_{t_0}^{t_0+T}D(\tau)\,\mathrm d\tau=\ln(1/\alpha)\,\Delta t .
+\label{eq:wald-bound}
+\end{equation}
+对起拖后实测的 \(D(t)\) 曲线分段线性积分（\(t_0=10\)~s 时 \(D=0\)，段内 \(D\) 线性变化）得 \(T\)：相干差分队约 \textbf{0.085~s}、相干共同队约 \textbf{0.089~s}。二者分别比实测锁定时间（0.80~s、3.95~s）\textbf{快约 9 倍与 45 倍}（表~\ref{tab:wald}）。这一数量级差距本身是有信息的：它说明判决时间并不由单帧可分性决定，而由\textbf{偏置幅度未知}（须跨帧累积定阶）、\textbf{多重比较}（\(M=4\)）与\textbf{远严于 \(\alpha=1\%\) 的门限}（后验\(\ge0.8\)且对数优势\(\ge10\)~nat，而 \(\alpha=1\%\) 仅需 4.6~nat）共同主导。因此式~\eqref{eq:wald-bound} 只能作为“若幅度已知”的\textbf{乐观量级参考}（非严格下界），不能预测判决时间。两臂倍数不同（9 倍 vs 45 倍）可作为共同模态更难的一个量级解释，\textbf{而非已证明的判决效率损失}。
+
+\begin{table}[H]
+\centering
+\caption{判决时间尺度与实测锁定的对照（启发式量级比较，不构成下界或效率损失证明；\(\alpha=1\%\)，\(\Delta t=0.02\)~s）}
+\label{tab:wald}
+\small
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+干扰合同 & \(D\)（\(t=12\)~s，nat/帧） & 理想判决时间 & 实测锁定 & 实测/理想 \\
+\midrule
+相干\(\cdot\)差分 & 15.7 & 0.085~s & 0.80~s & 9.4 \\
+相干\(\cdot\)共同 & 9.45 & 0.089~s & 3.95~s & 44.6 \\
+弱拖引通道（\(30\)~m/s） & 3.4 & 0.15~s & —（见第~\ref{sec:robustness}~节） & — \\
+\bottomrule
+\end{tabular}
+\par\vspace{2pt}{\footnotesize 注：\(D=\tfrac12\Delta\boldsymbol b^{\mathrm T}\boldsymbol M_\perp\Delta\boldsymbol b\) 由第~\ref{sec:t2}~节的全通道偏置计算（\(t=12\)~s 对候选与蒙特卡洛取中位，源 \texttt{exp/out\_innov/inforate.csv}）；当偏置仅落在单机距离通道时 \(D=\lambda/2\)。理想判决时间按式~\eqref{eq:wald-bound} 对实测 \(D(t)\) 分段线性积分求得（\(t_0=10\)~s 时 \(D=0\)，复算脚本 \texttt{audit/f/f91\_wald.py}）。实测锁定取表~\ref{tab:assoc} 的值。弱通道一行取同一实验的 \(-0.6\) 幅度通道（\(D=3.4\)）。该理想值假设偏置幅度已知且无多重比较，故为乐观下界，不是预测。}
+\end{table}
+
+\noindent\textbf{（4）共享噪声假设的可检验性。}\quad 式~\eqref{eq:shared-noise} 的核心是"同一平台同刻各候选共享\emph{同一个}噪声实现"。该假设可由数据直接检验：角度通道无干扰偏置，若假设成立，同帧各候选的角度差应只来自偏置（本文为零），候选间样本方差趋于零；若各候选另有私有噪声，样本方差随私有份额上升。估计式、数值精度（50 帧内误差约 \(\pm0.05\)，在线中位误差 \(<0.01\)）与违反时的退化见补充材料第~\ref{app:s}~节。
+
+\noindent\textbf{（5）定位与边界。}\quad 本节给出的是\textbf{表述与界}，不是精度增益：本文另实现并测试了两个更“合法”的集合似然。\textbf{候选差分质心版}在标准四臂上略优于现规则（10次蒙特卡洛，四臂 10.09\(\sim\)10.38~m 对 10.59\(\sim\)11.23~m），但其判据实质是“离候选质心最近”，在候选集构成变化（真值缺失、干扰幅度同号）时缺乏原理性保证，故未纳入主实验。\textbf{剖面一致性版}在相干共同臂的 MC=0 上直接退化（\textbf{125.1~m}，现规则 11.45~m）：\(\rho=1\) 时全部候选都满足剖面一致性，权重趋于均匀。两者均未做系统性的稳健性评估，故不采用；这说明简单的集合似然并不能稳定优于分块近似。其价值在于把经验门限（\(\chi^2(7,0.99)=18.48\)、\(\tau=0.8\)、间隔5、代价8、\(\gamma_v=0.5\)）重新表述为"给定\(\alpha\)下的判决时间尺度"，为门限标定提供一个信息论量级参考，并可给出“当前证据是否足以支撑判决”的量级参考；但由数据处理不等式与理想化前提，它\textbf{不构成}对个别种子失效的因果解释或预测，也不构成严格下界。
+
+
+
+
+\subsection{元组扩展的小样本诊断与同批复用范围}\label{sup:tuple-audit}
+
+本节同步既有P0/P1记录，不引入新配置。P0使用MC=115、314、0、1、2；P1小样本使用115、314、0、2。它们是已知失败种子与对照上的探索，不是独立确认。后续MC=300--399与既有基准实验复用，且包含参与P0/P1诊断的314。原记录早期“尚无新增退化”的结论只适用于当时小样本。100 种子复用结果曾在 MC=327 出现新增发散（137.5~m，36 帧 0.72~s 的短暂误锁）；主文随后以有限记忆视界（$\gamma=0.8$，先遗忘历史再更新）将该样本修复至 10.6~m，并把这段历史失效过程作为诊断记录保留，而非删去。
+
+两个设计要点均由对照实验确定。其一，\textbf{硬预筛与软证据的所测对照}：若先把 T1 未通过的候选硬性剔除再枚举元组，相干共同臂在种子 0/2/115 上由 11.45/10.45/11.37~m 劣化至 22.04/14.56/13.64~m；改用软证据后回到 11.46/10.33/11.36~m。原因是硬门限一旦误剔除真候选便不可回头，而软证据保留全部候选、只调整权重。其二，\textbf{多峰来自单平台歧义}：逐帧统计 top-2 元组的 Hamming 距离，其值为 1 的帧占 0.22\(\sim\)1.00、为 2 的仅 0.00\(\sim\)0.03，即两个峰只在某一个平台上不同——瓶颈是"该平台选哪个候选"，而非"跨平台组合是否等价"。
+
+P1的缺失状态实现仅在单一种子压力测试中报告激活率0.006，误差129.46 m对软证据版129.53 m；这不足以证明缺失状态普遍冗余。后续50种子压力测试显示无真回波时仍常给出判决，因此旧小样本解释不能替代本轮边界结果。T1版CUSUM仅在少量种子上检查，存在早于给定起点报警与相干臂不报警，未形成解除已知起点条件的端到端证据；本轮不将这些探索改写为主配置。
+
+\subsection{元组消融在随机几何下的复核}\label{sup:abl-jgeom}
+
+原 2$\times$2$\times$2 消融只用 3 个种子。本轮扩到 12 个种子（MC=300$\sim$311）并在随机几何下重跑，
+三个干扰臂 × 8 个变体的位置 RMSE 均值如下（括号内为发散数，满额 12）：
+
+\begin{table}[htbp]\centering\small
+\caption{2$\times$2$\times$2 消融（12 个种子，随机几何；位置 RMSE 均值，m）}\label{tab:abl-jgeom}
+\begin{tabular}{@{}lccc@{}}\toprule
+变体（全元组 / 软证据 / 遗忘） & 相干共同 & 相干差分 & RGPO非相干 \\ \midrule
+A1 对角 / 硬门限 / 无遗忘 & 103.8 (5) & 36.4 (1) & 39.1 (2) \\
+A2 对角 / 软证据 / 无遗忘 & 303.7 (12) & 61.5 (4) & 11.0 (0) \\
+A3 全元组 / 硬门限 / 无遗忘 & 30.5 (2) & 11.8 (0) & 11.0 (0) \\
+A4 全元组 / 软证据 / 无遗忘 & 10.9 (0) & 11.5 (0) & 11.0 (0) \\
+A5--A8（均含遗忘） & 10.9 (0) & 11.5 (0) & 11.0 (0) \\
+combo+v（参照） & 10.9 (0) & 11.5 (0) & 12.2 (0) \\
+\bottomrule\end{tabular}\end{table}
+
+结论有三点，且\textbf{对本文的表述是收敛性的}：
+（i）\textbf{遗忘是主导因子}：一旦打开有限记忆，A5--A8 四个变体的均值彼此相差不超过 0.004~m。\textbf{但它们逐种子并不相同}——36 个（种子$\times$臂）单元中，A8 与 A5 有 32 个存在差异、A6 与 A5 有 29 个、A8 与 A7 有 21 个，配对差分别为 $+0.001$ [$[-0.022,+0.029]$]、$+0.001$ [$[-0.023,+0.026]$]、$+0.004$ [$[-0.014,+0.031]$]，CI 全部含 0。即：\textbf{对应的组合空间与证据开关确实各自生效，只是在开启遗忘后效应量降到 0.01~m 以下、本样本量无法分辨}。前文以一位小数呈现均值时看起来"完全相同"，是取整造成的假象，此处更正。
+但本节只有 12 个种子，\textbf{不足以分辨元组与基线的差异}。主文表~\ref{tab:tuple} 用 100 个随机几何实现的 400 个单元做同批对照，结论是元组扩展\textbf{不构成改进}（64 态 7/400、4 态 9/400，均劣于基线 4/400，恶化全部落在相干共同臂）。因此本文\textbf{不把元组作为贡献陈述}；本节只保留为“为何曾误以为有效”的诊断记录；
+若要把归因做实，需要让基线在无遗忘条件下产生足够多的失效样本（例如专门挑选已知误锁几何），
+而不是靠增加种子数——这一点本轮未做。
+
+\subsection{附录：元组 + T1 软证据（\texttt{tuple\_t1}，仅附录位阶）}\label{sup:tuple-t1-appendix}
+
+\textbf{位阶。}按 \texttt{D-t3-tuple-t1-appendix-20261106}，\texttt{tuple\_t1}（元组假设空间 + T1 候选级软证据）\textbf{仅附录}：可交代机制与 FE 族消融出口；\textbf{不升}正文主算法/主表默认。正文默认仍为冻结配置~B（$\mathrm{scope}=\mathrm{diag}$，$\gamma=0.8$，$\gamma_v=0$，pred）。
+
+\textbf{机制摘要。}相对对角 combo 累积，元组后验放宽跨平台编号对齐；发射项含组合几何代价与 T1 软证据；有限记忆（$\gamma=0.8$）先遗忘再更新。T2 既有归档（联合 MAP vs 边缘 MAP + 干预 A）已证伪若干救援路径，故\textbf{不}据此把 \texttt{tuple\_t1} 升主。
+
+\textbf{与主文分工。}主文第~\ref{sec:tuple}~节与第~\ref{sec:tuple-results}~节保留配置定义与对照表；本附录只固定位阶与可用/禁用证据口，不改写主表数字。
+
+\subsection{附录：融合消融 A--F（FE 族）}\label{sup:fusion-af}
+
+\textbf{合同。}run \texttt{fusion\_AF\_20261106T025032}；种子 MC 1200--1399；HEAD \texttt{dfc2c182}；csv bundle sha256 \texttt{3ee050f8707ff84e56f7ffe03eb5b3f1711b58f27f607377206599bdee0f2e30}；confirm=false；paper\_promote=false。依据 \texttt{D-fusion-AF-ACCEPT-20261106} / \texttt{FUSION\_AF\_ACCEPT\_20261106.md}。
+
+\begin{table}[htbp]
+\centering
+\caption{FE 族融合消融 A--F 的参考正确率摘要（均值；臂 C 见注）}\label{tab:fusion-af}
+\small
+\begin{tabular}{@{}lccc@{}}
+\toprule
+臂 & $\mathrm{ref\_ok}$ & 发散率 & 备注 \\
+\midrule
+A FE+$\gamma_v=0.5$ & 0.947 & 0.015 & 对照 \\
+B FE+$\gamma_v=0.5$+改锁 & 0.966 & 0.009 & 改锁增益 \\
+C 默认 B（tuple） & --- & 0.022 & 仅程序跑通；\textbf{不}报 $\mathrm{ref\_ok}$ \\
+D$'$ FE@$\gamma_v=0$+改锁 & 0.974 & 0.016 & \textbf{非}元组$\times$改锁 \\
+E 白化 & 0.966 & 0.010 & 审计，不升主 \\
+F1 关 T1 & 0.823 & 0.011 & T1 有贡献（审计） \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\noindent\textbf{可读结论。}（i）A$\to$B 显示改锁带来 $\mathrm{ref\_ok}$ 增益；（ii）D$'$ 为 FE@$\gamma_v=0$+改锁，不得写成元组$\times$改锁；（iii）F1 关 T1 后 $\mathrm{ref\_ok}\approx0.823$，同族约 $0.95+$，支持「T1 通道值得交代」——仅附录；（iv）E 不升主。
+
+\noindent\textbf{硬禁用。}（1）禁止写臂 C 的 $\mathrm{ref\_ok}$（\texttt{lock\_idx} 空 $\Rightarrow$ 恒 0，不可用）；（2）禁止把 C 的 CSV $\gamma_v=0.5$ 列当成真跑 $0.5$；（3）禁 index0 救回叙事；（4）禁 $0.5$-as-main；（5）禁 paper\_promote。真·元组$\times$改锁与 F2 仍 HOLD。
+
+\subsection{与 TLB/N1 路线的贡献边界}\label{sup:tlb-boundary}
+
+本文的 64 元组假设、跨帧后验累积与平台边缘化，与此前 TLB/N1 路线的核心机制存在交集。
+若两篇工作分别发表，须明确划分：
+
+\begin{itemize}
+\item \textbf{本文主张的部分}：命题~1/2 给出的\textbf{可辨识性边界}（纯多普勒判据在三机非共面时自由度为零、
+纯角度判据在窄角下失效）、由此导出的\textbf{双通道检验}（T1 距离-多普勒积分一致性 + T2 跨机角度-距离联合一致性），
+以及\textbf{参考构造}（对角组合 + 跨帧累积 + 速度惩罚）及其失效边界。这三项是本文的理论与方法主干。
+\item \textbf{本文不主张的部分}：把逐候选假设扩展为跨平台元组、在元组上做跨帧后验递推、
+以及沿平台维做边缘化——这些机制在 TLB/N1 路线中已出现，本文的元组版应视为\textbf{该路线的适配实现}，
+它在 12 个合成难例上可恢复部分失效（见第~\ref{sup:abl-hard}~节：全组合单独 16/18、遗忘单独 18/18），但\textbf{主文表~\ref{tab:tuple} 的 400 单元同批对照未支持其增益}（7/400、9/400 对基线 4/400），故本文不主张元组带来改进，仅将其作为该路线的适配实现记录在案。
+\item \textbf{本文的增量}：把元组放到\textbf{共模归一化后的可辨识性框架}里解释其能力上界，
+并用同一套合同给出它与有限记忆的\textbf{可分离性}（两条机制在各自适用范围内可互相替代：合成难例上由记忆长度主导，锁箱 12 例由速度连续性项主导）。
+\end{itemize}
+
+若审稿或编辑认为仍需更强的区分，建议的做法是在方法节显式引用 TLB/N1 并逐条对照，
+而不是在本稿中重复其推导。
+
+\subsection{锁箱的种子修正与逐单元归因}\label{sup:lockbox-attr}
+
+\textbf{（一）一处种子缺陷及其更正。}锁箱脚本原先用 \texttt{idx = mc - MC0} 作为随机流索引。
+当按 4 个进程分块（\texttt{MC0}=2000/2025/2050/2075）并行时，每个进程的 \texttt{idx} 都是 0--24，
+于是\textbf{四个块重复了同一批 25 个实现}：例如种子 2001/2026/2051/2076 的 combo 位置 RMSE
+逐位相同（125.24575061495246），tuple 亦相同（12.223609700884719）。
+因此此前报告的“100 个全新种子、8/400”实为\textbf{25 个唯一实现各复刻 4 次、2 个唯一失效}。
+
+修正为绝对索引（\texttt{idx = mc - 2000}，与 \texttt{MC0} 解耦）后重跑 100 个互不重复的种子，
+并在聚合处增加去重断言（同一 (方法, 臂) 下不得出现重复的 RMSE 值）。自检结果：0 重复。
+
+\textbf{（二）修正后的锁箱结果}（100 个种子 $\times$ 4 臂 $\times$ 2 方法）：
+
+\begin{table}[htbp]\centering\small
+\caption{锁箱重跑（100 个互不重复的种子；无标签回退；位置 RMSE，m）}\label{tab:lockbox-v3}
+\resizebox{\linewidth}{!}{%
+\begin{tabular}{@{}lcccccc@{}}\toprule
+臂 & combo 均值 & tuple 均值 & combo CVaR95 & tuple CVaR95 & combo 发散 & tuple 发散 \\ \midrule
+传统VGPO & 10.68 & 10.66 & 13.0 & 13.1 & 0 & 0 \\
+相干·共同 & 14.15 & \textbf{21.58} & 80.5 & \textbf{131.0} & 3 & \textbf{9} \\
+相干·差分 & 16.78 & 11.29 & 121.1 & 14.0 & 4 & 0 \\
+RGPO非相干 & 18.21 & 10.80 & 125.9 & 13.3 & 5 & 0 \\ \midrule
+合计 & — & — & — & — & \textbf{12} & \textbf{9} \\ \bottomrule
+\end{tabular}}\end{table}
+
+配对精确 McNemar：12 次“combo 发散而 tuple 不发散”、9 次反向，按单元计算的精确双侧 $p=0.6636$，\textbf{未获差异证据，但不证明等效}；同一种子内的多臂相关，该数值仅作描述性复核。
+
+\textbf{更正}：早前版本报告的 0/400 与 $p=0.00049$ 依赖“候选 0 回退”——在仿真中候选 0 即真实回波，
+等价于在元组弃权帧上把真值当作参考，该口径不合规，现予撤回。改用无标签回退（按预测距离选参考）后，
+差异只存在于分臂层面：两个臂的发散全部消除，相干共同臂反而由 3 增至 9，
+\textbf{未获总体优势证据；计数净减少 3/400 不等于零效应，也未证明等效}。改用更严格的“弃权帧不给证据”口径则合计为 13/400（$p=1.00$），方向一致。
+
+\textbf{（三）逐单元归因}：在 12 个失效单元上，用同一场景/量测/候选/滤波流跑四个配置：
+
+\begin{table}[htbp]\centering\small
+\caption{锁箱 12 个真实失效单元上的四配置对照}\label{tab:attr-forget}
+\begin{tabular}{@{}lcc@{}}\toprule
+配置 & 仍发散 & 说明 \\ \midrule
+combo（无遗忘） & 12/12 & 基线 \\
+combo + 遗忘（$\gamma=0.8$） & \textbf{12/12} & 数值逐例与基线相同；$\gamma$ 取 1.0/0.8/0.5/0.2 均不变 \\
+元组 + 遗忘（$\gamma=0.8$） & \textbf{0/12} & 全部恢复至 10.6$\sim$13.1~m \\
+元组、关闭遗忘（$\gamma=1.0$） & \textbf{0/12} & 与上一行逐例相同 \\ \bottomrule
+\end{tabular}\end{table}
+
+\textbf{注（回退口径）}：本表“元组”两行为当时缺省的候选 0 回退，该回退在仿真中等同于真值，
+因此这两行不能作为主结果（当时为 index0 回退，属口径污染）。改用无标签回退后，元组+遗忘为 \textbf{2/12}、
+元组关闭遗忘仍为 \textbf{0/12}（同一批 12 单元、同一随机流）。
+早前「元组救回全部 12 例」及依赖 index0 的 0/400 叙事均已撤回；无标签（pred）回退下同批为 10/12 恢复、关闭遗忘时 12/12，\textbf{不得再作主卖点}。
+
+三点结论：
+
+\textbf{（i）遗忘对这些真实失效无效。}指数遗忘只是把各候选的 logit 等比缩放；
+由于错误候选的证据从早期就持续更强，缩放不改变 $\arg\max$，判决不变。
+
+\textbf{（ii）更正：12 例失效的来源是速度连续性项，不是假设空间。}
+补充的六配置对照（同一批 12 单元、同一随机流）显示：对角累积在 $\gamma_v=0$ 下
+\textbf{由 12/12 失效转为 0/12}；元组的 4 状态与 64 状态、以及三种弃权回退策略
+（候选 0 / 预测距离 / 不回退）在 $\gamma_v=0$ 下同样 0/12；而保留 $\gamma_v=0.5$ 时
+4 状态与 64 状态均复发 2/12。
+因此\textbf{“假设空间不足”这一解释不成立}：判决机制（一次性锁定/逐帧重判）与
+状态空间（4/64）在本批单元上都不改变结果，唯一起作用的是速度项。
+
+\textbf{（iii）两类失效的机制仍不同，但不能用“空间”作区分。}第~\ref{sup:abl-hard}~节的
+18 个难例是“无遗忘配置下人为选出”的记忆固化失效，那里遗忘单独即可恢复；
+锁箱的 12 例则由速度项在早期压低错误候选代价造成。\textbf{这同时更正了此前
+“遗忘是主导因子”与“假设空间救回发散”两处旧表述}——前者只覆盖合成难例，
+后者已被六配置对照否定。
+
+\subsection{消融的条件化归因（难例上的配对比较）}\label{sup:abl-hard}
+
+上一小节的边际比较在 12 个种子上无法区分"全组合"与"软证据"，因为多数单元本来就无失效。
+更有效的做法是\textbf{以失效为条件}：先在上表的 12 个种子 × 3 臂中找出 A1（对角/硬门限/无遗忘）
+或 A2（对角/软证据/无遗忘）发散的全部单元，共 \textbf{18 个}，再看每个变体在这 18 个单元上
+是否恢复。这是配对比较，样本少但把握大。
+
+\begin{table}[htbp]\centering\small
+\caption{18 个失效单元上的恢复情况（发散数 / 18）}\label{tab:abl-hard}
+\begin{tabular}{@{}llc@{}}\toprule
+变体 & 机制组合 & 发散数 \\ \midrule
+A1 & 对角 + 硬门限 + 无遗忘 & 8 \\
+A2 & 对角 + 软证据 + 无遗忘 & 16 \\
+A3 & 全组合 + 硬门限 + 无遗忘 & 2 \\
+A4 & 全组合 + 软证据 + 无遗忘 & \textbf{0} \\
+A5 & 对角 + 硬门限 + 遗忘 & \textbf{0} \\
+A6 & 对角 + 软证据 + 遗忘 & \textbf{0} \\
+A7 & 全组合 + 硬门限 + 遗忘 & \textbf{0} \\
+A8 & 全组合 + 软证据 + 遗忘 & \textbf{0} \\
+combo+v & —— & \textbf{0} \\
+\bottomrule\end{tabular}\end{table}
+
+四条结论：
+
+\textbf{（i）全组合单独不够。}A3 只把 8 个失效降到 2 个：把假设空间从 4 个对角元扩到 64 个
+并不能阻止"错误假设被无限记忆固化"——它只是让正确的元组有机会被选中，但一旦锁错，
+没有机制把它解冻。
+
+\textbf{（ii）全组合 + 软证据足够。}A4 在\textbf{不忘记忆}的前提下把 18 个失效全部恢复。
+原因是软证据保留了全部候选的权重而不做硬剔除，错误锁定的元组会在后续帧被逐步稀释。
+
+\textbf{（iii）遗忘单独也足够。}A5（对角 + 硬门限 + 遗忘）同样恢复 18/18——
+这与 A3 形成对照："扩大假设空间"与"缩短记忆"在这批失效上可以互相替代，
+而后者实现代价低得多。
+
+\textbf{（iv）本小节的结论只适用于这一类失效。}
+两条机制都能恢复同一批失效，说明\textbf{在这批合成难例上}共同成因是\textbf{记忆长度}。
+\textbf{但这一结论不能外推到真实锁箱失效}：见第~\ref{sup:lockbox-attr}~节的逐单元归因——在锁箱的 12 个真实失效上，给对角参考加遗忘（$\gamma$ 取 1.0/0.8/0.5/0.2）\textbf{完全不改变结果}（12/12 仍发散，数值逐例相同）；而关闭速度连续性项后，对角参考与元组均转为 0/12（第~\ref{sup:lockbox-attr}~节六配置对照）。
+两类失效的机制不同：这里的单元是"无遗忘配置下人为选出"的、由记忆固化造成的失效；锁箱的失效则由速度连续性项造成——它在早期压低错误候选的代价，与假设空间无关。
+\textbf{因此不能把"遗忘是主导因子"当作全文的归因结论}，它只覆盖本小节构造的这一类。
+
+局限：18 个单元全部来自 12 个种子，且都是"无遗忘"配置下的失效。
+
+\subsection{FC 加权机制的逐帧核查}\label{sup:fc-mech}
+
+审稿意见指出：若同平台同时刻全部候选共享噪声 $\varepsilon$，加权平均不能降低噪声。
+该意见成立。按本文模型 $z_m=h(x)+b_m+\varepsilon$，归一化加权后
+
+\[\sum_m w_m z_m=h(x)+\varepsilon+\sum_m w_m b_m\]
+
+即\textbf{共享噪声项原样保留}，加权唯一能改变的是偏置项 $\sum_m w_m b_m$。
+为把这一点做成证据而非辩解，本小节逐帧分解候选量测（\texttt{exp/probe\_fc\_mechanism.py}，3 个种子 × 2 个臂 × 后段 20 帧 × 3 平台）：
+
+\begin{table}[htbp]\centering\small
+\caption{加权量测的分解（RMS，单位与量测同；距离为 m、多普勒为 m/s）}\label{tab:fc-mech}
+\resizebox{\linewidth}{!}{%
+\begin{tabular}{@{}lcccc@{}}\toprule
+臂 & 公共分量（距离） & 候选间偏置散布（距离） & 偏置散布（多普勒） & 加权后残留偏置（多普勒） \\ \midrule
+传统VGPO & 7.64 & 0.000 & 19.95 & 4.12 \\
+相干·共同 & 108.10 & 188.14 & 37.63 & 21.69 \\ \bottomrule
+\end{tabular}}\end{table}
+
+三点读法：
+
+\textbf{（i）共享噪声不被平均。}传统VGPO 臂上公共分量 RMS 为 7.64~m，与 $\sigma_R=10$~m 同量级，
+且与候选数无关；这正是 $\varepsilon$ 的直接体现。
+
+\textbf{（ii）加权改变的是偏置。}同一臂上候选间的距离偏置散布为 0（VGPO 只拖多普勒），
+多普勒偏置散布 19.95~m/s，经 FC 权重加权后残留仅 4.12~m/s——\textbf{偏置被显著抵消}。
+
+\textbf{（iii）相干臂上两者都未被抵消。}公共分量 108~m（拖引造成的共模偏移）、
+偏置散布 188~m、加权后仍残留 21.7~m/s 多普勒偏置，这解释了 FC 在该臂退化到 23.04~m。
+
+该分解与 100 种子的干净口径合在一起解释了两件事：\textbf{（a）FC 与标准PDA 在无距离偏置臂上不可分}（10.57/10.67/10.64 对 10.58/10.67/10.69）——隶属度本就是 PDA 似然的单调函数，加权只微调等效增益；\textbf{（b）FC 在相干共同臂的发散少于 PDA}（10/100 对 13/100）——软加权在拖引发生后仍对全部候选保留权重，重新锁回真值的路径比硬判决多一条。偏置抵消与增益改变的相对占比仍未隔离，不作定量归因。
+
+同时更正一处表述：\textbf{“仅选真候选”只是已知候选身份条件下的单候选参考性能}，
+不能当作所有软融合估计器的通用精度上界。
+
+\subsection{外部基线主表的几何对照与可复现性}\label{sup:ext-jgeom}
+
+正文表~\ref{tab:extcmp} 已改为 \textbf{100 个随机几何实现}。本小节给出两件配套证据：
+固定几何下的同口径对照，以及接口重建后的可复现性核对。
+
+\textbf{（一）固定几何（MC=0$\sim$19，20 个种子，位置 RMSE 均值，m）}
+
+\begin{table}[htbp]\centering\small
+\caption{固定几何与随机几何（100 种子）的对照（位置 RMSE 均值，m）}\label{tab:ext-fixed}
+\begin{tabular}{@{}lccccc@{}}\toprule
+方法 & 传统VGPO & 四重混合 & 相干·共同 & 相干·差分 & RGPO非相干 \\ \midrule
+\multicolumn{6}{@{}l}{\emph{固定几何，20 种子}}\\
+标准PDA & 10.74 & 10.70 & 49.64 & 11.59 & 10.80 \\
+NN & 11.92 & 12.23 & 32.26 & 14.35 & 21.39 \\
+GNN & 11.96 & 12.16 & 33.86 & 19.34 & 21.45 \\
+DVB-2D & 11.82 & 11.86 & 149.71 & 14.23 & 12.14 \\
+FC & 10.73 & 10.70 & 45.27 & 11.41 & 10.76 \\
+BC & 10.74 & 10.70 & 55.40 & 11.74 & 10.86 \\
+本文 & 10.84 & 10.67 & 11.16 & 11.19 & 11.01 \\
+\midrule
+\multicolumn{6}{@{}l}{\emph{随机几何，100 种子（正文表~\ref{tab:extcmp}）}}\\
+标准PDA & 10.58 & 10.67 & 27.08 & 11.46 & 10.69 \\
+NN & 11.70 & 12.41 & 14.81 & 14.20 & 27.12 \\
+GNN & 11.68 & 12.30 & 17.11 & 14.03 & 25.00 \\
+DVB-2D & 11.30 & 11.75 & 109.87 & 15.67 & 11.52 \\
+FC & 10.57 & 10.67 & 23.04 & 11.37 & 10.64 \\
+BC & 10.58 & 10.67 & 36.31 & 11.71 & 10.81 \\
+本文 & 10.66 & 10.61 & \textbf{13.13} & 12.27 & 14.23 \\
+\bottomrule\end{tabular}\end{table}
+
+\textbf{（二）可复现性核对}：固定几何一栏由当前代码在同一批 20 个种子上重跑，与论文旧版表格逐项对照——
+标准PDA（49.64）、NN（32.26）、GNN（33.86）、DVB-2D（149.71）、FC（45.27）、本文（11.16）\textbf{完全一致}，
+逐臂其余数值与 \texttt{raw\_A.csv}、\texttt{raw\_dvb2d.csv}、\texttt{raw\_fuzzy.csv} 的聚合结果一致；
+BC 行取自其修正实现（补上 \(\texttt{dop\_shift}\) 分支后）的同批重跑：相干共同臂在\textbf{固定几何}为 55.403~m（20 个种子，发散 7/20），在\textbf{20 个随机几何实现}上为 55.508~m。两者相差 0.1~m 来自几何差异，不是重跑噪声——同一几何下各方法的数值可逐位复现。
+这说明外部方法接口重建（见下文缺陷记录）是忠实的，旧表可逐项复现。
+
+\textbf{（三）几何效应}：由固定改随机后，各方法的变化并不一致——
+NN/GNN 在相干共同臂由 32.26/33.86~m 降至 14.81/17.11~m（固定几何恰是它们最不利的抽样）；
+DVB-2D 在相干共同臂由 149.71~m 降至 109.87~m（仍最差，发散 52/100）；
+FC 的均值口径几乎不随几何变化（无欺骗臂 10.73/10.76 对 10.57/10.64；差分臂 11.41 对 11.37），
+但相干共同臂的\textbf{尾部}对几何敏感：发散 5/20（固定）对 10/100（随机）、均值 45.27 对 23.04~m——
+早前 20 种子小样本给出的“FC 均值 50.18/24.23、无偏置臂 9.51/9.57”均系样本量不足的假象，已更正；
+本文方法在相干共同臂由 11.16~m 升至 13.13~m（100 种子包含更难的样本），
+发散数 2/100，仍低于标准PDA（13/100）、BC（21/100）、DVB-2D（52/100）、FC（10/100），
+但高于 NN（1/100）。
+
+\textbf{（四）为什么不能直接用 FC}：把 FC 的软隶属度逐元素乘到本文一致性权重上
+（20 个种子，逐种子配对），四臂均值变化仅 0.02$\sim$0.08~m（10.65$\to$10.63、
+10.95$\to$10.88、10.96$\to$10.89、12.07$\to$12.04）。原因是\textbf{门控与平滑互斥}：
+FC 在无欺骗臂的优势（随机几何下约 0.1~m）恰恰来自它\textbf{不做门控}、始终对全部候选加权平均，
+因而等效于压低量测噪声；而本文在无欺骗时不会触发门控之外的额外处理，
+相乘之后仍被门控后的单候选支配。两者是同一权衡的两端：不做门控换来无欺骗时的方差收益，
+代价是相干拖引下的 23.04/11.37~m（共同/差分臂均值）。
+
+\textbf{（五）一处实现缺陷的记录}：本轮初版复核曾报告 BC 在相干共同臂为 10.2~m（优于本文），
+经核查是管线在恢复外部方法接口时漏掉了“偏置补偿类”的偏移施加分支，使 BC 的均匀权重被
+\(\arg\max\) 映射到候选 0（真值）的多普勒上，等价于直接读真值。补上 \(\texttt{dop\_shift}\)
+的施加与其优先级后复算得到上表的 55.40/36.31~m。该缺陷只影响 BC（其权重恒为均匀），
+NN/GNN/DVB/FC 返回非均匀权重，不受影响。
+
+\subsection{F50/F60 链路的重跑与三张表的口径切换}\label{sup:f50-rerun}
+
+主文表~\ref{tab:rmse_main}、表~\ref{tab:factorial} 与表~\ref{tab:consistency} 原来自早期
+F50/F60 链路，其原始 CSV 未随本分支保留。本轮用当前代码重建该链路的可执行版本
+（\texttt{exp/exp\_f50\_full.py}，\textbf{八种方法} $\times$ 两个场景 $\times$ 50 次蒙特卡洛，
+产物 \texttt{f50\_full\_vgpo.csv} / \texttt{f50\_full\_4mix.csv}），并把三张表全部切换到该口径。
+
+\textbf{八种方法的实现配方}：无门控基线=本地 IMM+PDA（不做一致性门控）+CI 融合；
+集中式PDA=单滤波器处理全部平台候选（与外部对比实验的 PDA 选择器同口径）；
+单机独立=仅 M1 全候选 + PDA；CI/ACF 无/有反馈 = \texttt{dist\_ci}/\texttt{dist\_acf\_w05(a3)} ± 反馈；
+仅选真候选 = ACF+反馈但参考恒为候选 0。
+
+重跑得到的关键量：反馈主效应 $-2.556$（三重线性）/ $-2.641$（四重混合），
+配对 95\%CI 不含 0；融合方式主效应 $-0.0083$/$-0.0056$；交互项 $+0.0067$/$+0.0089$
+（CI 不含 0，但绝对值不足 0.01~m，实际可忽略）。
+
+\textbf{与旧表的两处实质差异}：
+（i）旧表~\ref{tab:rmse_main} 的“本文方法（无反馈对照）”行为 10.34~m，与“有反馈”行相同，
+而旧表~\ref{tab:factorial} 的 ACF 无反馈列为 12.333~m——\textbf{两表互相矛盾}；
+重跑确认无反馈确应劣化（13.07~m），旧表 19 的该行系笔误。
+（ii）ANEES3 由旧表的 1.36 变为 1.92、覆盖由 0.998 变为 0.991，
+对应 \texttt{acc\_jitter} 与协方差膨胀处理的版本差异；定性结论（偏保守）不变。
+
+\textbf{集中式PDA 的一致性统计}：其实现路径（\texttt{mode='pda\_only'}）默认不输出 NEES，需显式 \texttt{diag=True}；补测后 ANEES3 为 \textbf{4.31}（三重线性）/ \textbf{5.43}（四重混合），覆盖 0.850/0.766，均显著偏离名义值 3 与 0.95。这是本轮一个与主结论同向的旁证：\textbf{无门控的集中式 PDA 点估计均值看起来不差（10.75/10.71~m），但滤波器严重不自洽}——假候选混入更新使新息方差被低估，协方差变“窄”，覆盖率随之塌陷。
+\subsection{几何随机化协议}\label{sup:geom-protocol}
+
+\textbf{动机}：旧实现的 \texttt{simulate\_scene} 接收随机源但从未使用，
+因此 100 个种子的真值轨迹\textbf{逐位相同}，"100 个种子"实际是"同一几何上的 100 次噪声实现"。
+为消除结论对单一几何的依赖性，本轮引入有界几何抖动并重跑主结果。
+
+\textbf{抖动范围}（冻结于 \texttt{frozen\_scene\_20261103}，sha256 前 8 位 \texttt{ef3f7d6e}）：
+目标与平台初始位置各向同性 \(\sigma=250\)~m、目标航向 \(\sigma=2.5^\circ\)、速度 \(\pm3\%\)、
+机动时刻 \(\sigma=0.5\)~s；平台速度、机动过载、PN 增益与干扰幅度\textbf{不变}（属实验合同）。
+
+\textbf{可容许集}（整窗校验，非只看首帧）：\(\operatorname{rank}(\boldsymbol U)=3\)；
+两两视线角 \(\in[14^\circ,26^\circ]\)、均值 \(\in[17^\circ,22^\circ]\)；
+\(\mathrm{cond}(\boldsymbol U)\in[6,9.5]\)；\(R_0\in[9,19]\)~km；接近速度 \(>50\)~m/s；
+\(t_{\mathrm{hit}}>21\)~s 且帧数 \(\ge1001\)。采样方式为\textbf{拒绝重采样}
+（每次尝试独立子流，最多 64 次；不裁剪、不投影，避免质量堆积在约束边界）。
+
+\textbf{标定结果}（300 个种子，只算几何不跑滤波）：视线角最小值 15.2/17.1/18.8$^\circ$、
+最大值 19.8/21.6/24.1$^\circ$、均值 18.1/19.6/21.0$^\circ$（5\%/50\%/95\% 分位）；
+\(\mathrm{cond}(\boldsymbol U)\) 7.5/8.3/9.3；共同模态每平台可辨门限 \(\Delta R_{\min}\) 892/1000/1128~m，
+与第~\ref{sec:test-geometry}~节的解析值同量级。每种子重采样次数中位 2、均值 2.6、最大 16。
+
+\textbf{配对设计}：随机几何世代复用固定几何的同一组种子（该流的场景分量历史上未被消费），
+因此新旧结果可逐 mc 配对，差异只来自几何。实测配对差：四臂分别为 \(-0.33/-0.32/-0.32/-0.37\)~m，
+bootstrap 95\% 置信区间均含 0——\textbf{几何随机化没有系统性抬高或压低误差}，结论方向不变。
+
+\textbf{随机流隔离}：四模块随机数按"世代 $\times$ 流 $\times$ MC"分配。锁箱使用新世代
+（基址 \(1.2\times10^{6}\) 起），与历史流在整数与抽样指纹两个层面均不相交；
+审计命令 \texttt{python -m src.seeds} 同时复现了旧方案下"锁箱 mc=2000 的场景种子 = 历史 mc=0 的候选种子"
+这一碰撞，作为新方案必要性的证据。
+
+\subsection{起拖时刻一致性对照}\label{sup:timebase-audit}
+
+\textbf{选项 A（共享时间原点、历史臂全量重跑）敏感性 = 未跑}，另令；本小节不把它升格为主结论。
+正文第 2.3 节（选项 B）说明：距离偏置自 $t_0=10$~s 起拖、独立多普勒自 $t=0$ 起按周期演化；$t_0$ 仅作用于距离通道／距离率。legacy 与 RGPO 非相干受影响，相干共同／差分（$\rho=1$）不受影响。
+下列小样本诊断表（MC=300--309，10 种子）仅为既有口径说明、\textbf{不}构成选项 A 升格：
+\texttt{split}（现行：多普勒 0~s、距离 10~s）与 \texttt{joint}（两通道同自 10~s；仅诊断、非全量重跑）。
+
+\begin{table}[htbp]\centering\small
+\caption{起拖时刻对照（位置 RMSE，m；速度为 10 种子均值，m/s）}\label{tab:sup-timebase}
+\begin{tabular}{@{}lcccc@{}}\toprule
+臂 & 基准 & 位置均值/中位 & 前段速度误差 & 后段速度误差 \\ \midrule
+传统VGPO & split & 11.47/11.34 & 21.91 & 23.99 \\
+传统VGPO & joint & 11.13/11.00 & 21.03 & 23.51 \\
+相干共同 & split & 11.26/11.51 & 21.03 & 23.78 \\
+相干共同 & joint & 11.26/11.51 & 21.03 & 23.78 \\
+相干差分 & split & 11.76/11.77 & 21.03 & 25.37 \\
+相干差分 & joint & 11.76/11.77 & 21.03 & 25.37 \\
+RGPO非相干 & split & 11.36/11.30 & 21.91 & 23.04 \\
+RGPO非相干 & joint & 10.99/11.06 & 21.03 & 22.95 \\
+\bottomrule\end{tabular}\end{table}
+
+三点结论：（i）两个相干臂在两种口径下\textbf{逐位相同}——$\rho=1$ 时 $(1-\rho)=0$
+使独立多普勒项被消去，与第 2.3 节的说明一致；（ii）受影响的是传统VGPO与非相干两臂，
+差异为 0.34~m 与 0.37~m（joint 略优），前段速度误差 21.91$\to$21.03~m/s，
+即“多普勒提前 10~s 起拖”使场景\textbf{略微更难}而不是更容易；
+（iii）两种口径下均无发散样本。因此该口径问题不影响主结论的方向；本文保留选项 B（分阶段）叙述。
+全量选项 A 敏感性仍为未跑（另令），不以本表代替。
+
+\subsection{跨平台固定编号置换实验}\label{sup:perm-audit}
+
+\textbf{本小节同时给出两个几何世代的结果}：下表左半为历史\textbf{固定几何}世代（30 种子，MC=300--329），右半为本轮\textbf{随机几何}世代（同批种子）。两者不可混用，正文引用时须注明世代。
+
+样本 MC=300--329（30 个种子）、三臂、三方法，共 270 条结果。物理候选与量测不变，
+仅对各平台施加固定置换 $\pi_1=(0,1,2,3)$、$\pi_2=(2,0,3,1)$、$\pi_3=(1,3,0,2)$，
+真值三元组变为 $(0,1,2)$、不再对角。
+
+\begin{table}[htbp]\centering\small
+\caption{固定置换下的端到端结果（位置 RMSE，m；30 种子；固定几何与随机几何并列）}\label{tab:sup-perm}
+\begin{tabular}{@{}llccccl@{}}\toprule
+世代 & 臂 & combo & 元组 & oracle & 发散 c/t/o & 参考正确 c/t \\ \midrule
+固定 & 相干共同 & 14.01 & 14.13 & 13.13 & 1/1/1 & 0/30 · 30/30 \\
+ & 相干差分 & 21.94 & 18.61 & 13.53 & 2/1/1 & 0/30 · 30/30 \\
+ & 非相干 & 13.90 & 13.89 & 13.14 & 1/1/1 & 0/30 · 29/30 \\ \midrule
+随机 & 相干共同 & 12.77 & 12.89 & 12.05 & 0/0/0 & 0/30 · 30/30 \\
+ & 相干差分 & 17.52 & 18.06 & 12.47 & 0/0/0 & 0/30 · 30/30 \\
+ & 非相干 & 12.76 & 12.75 & 12.06 & 0/0/0 & 0/30 · 29/30 \\ \bottomrule
+\end{tabular}\end{table}
+
+oracle 把参考强制设为该帧真值（\texttt{oracle\_ref}），给出“参考始终正确”时的上限：
+差分臂 13.53~m。\textbf{固定几何}下可把误差拆成两部分——combo 的 21.94~m 中约 8.4~m、
+元组的 18.61~m 中约 5.1~m 来自参考错位，其余为跟踪本身（几何与噪声）的底噪。
+\textbf{随机几何}下这一拆分不再成立：两法的端到端均值分别为 18.06 与 17.52~m、发散均为 0/30，
+差异不足以支持“元组在端到端上更优”，能稳定复现的只有\textbf{参考身份}一项
+（combo 0/90 对元组 89/90）。这正是正文把该实验的结论限定为“结构化事实、非端到端收益”的原因。
+
+\subsection{逐帧随机编号重排实验}\label{sup:reorder-audit}
+
+样本同上（30 种子、三臂），每帧每平台独立随机重排候选编号，破坏平台内跨帧身份连续性。
+结果：相干共同臂 combo 34.00~m、元组 29.74~m（各 4/30 发散）；差分臂 39.13~m、37.95~m
+（各 5/30）；非相干臂 13.66~m、13.70~m（各 1/30，即四臂同时失效的种子 314）。
+\textbf{两种方法同时退化}，说明元组后验只放宽跨平台编号对齐，平台内跨帧身份连续仍是必要条件。
+
+\textbf{随机几何世代（同批 30 种子）}：相干共同臂 combo 27.99~m、元组 34.26~m（3/30 与 4/30 发散），
+差分臂 24.88~m、34.73~m（3/30 与 4/30），非相干臂 12.55~m、12.63~m（0/30）。
+结论方向与固定世代一致（同时退化），但\textbf{元组在相干两臂上反而略差于 combo}，
+这与“元组只放宽跨平台对齐、不放宽跨帧连续”的解释一致：编号在帧间乱序时，
+元组后验的跨帧累积同样失效，而其更大的假设空间给了更多错误锁定的机会。
+
+\subsection{遗忘顺序与遗忘系数的确定记录}\label{sup:forget-audit}
+
+$\gamma$ 由 MC=327、115、0 三个种子的扫描确定：$\gamma\in\{1,0.9,0.8,0.5,0\}$，
+$\gamma\le0.9$ 即可把 327 的 137.5~m 拉回 11.3~m，$\gamma=0.8$ 降至 10.6~m，再降低无额外收益。
+遗忘顺序（更新前遗忘历史 vs 更新后温度化）在 MC=300--314（15 种子、60 单元）上配对核对：
+逐格最大差 0.10~m、平均 0.004~m、发散计数一致，故表~\ref{tab:tuple} 对两种顺序均适用；
+正文采用前者，因其 $\gamma=0$ 极限与逐帧独立判决一致。
+
+\subsection{真实回波完全移除的50种子结果}\label{sup:suppression-audit}
+
+样本为MC=300--349，共50个种子；四臂、三方法，共600条结果。与主实验相比，真实回波整条移除，候选数由4变为3，候选0也是假回波，真实候选索引不存在，故参考正确率不定义。\texttt{combo}为原主配置，\texttt{tuple\_t1}弃权时采用候选0回退，\texttt{tuple\_t1\_pd}则采用预测距离回退；后者仅作失败场景对照，未写作推荐配置。
+
+\begin{table}[htbp]
+\centering\small
+\caption{真实回波移除压力测试（MC=300--349；位置RMSE，m；前三列为均值/中位/p90；发散判据为RMSE大于50 m；末列为元组版起点后的判决帧比例均值）}\label{tab:suppression}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{@{}lccccc@{}}
+\toprule
+干扰臂 & combo & tuple\_t1 & tuple\_t1\_pd & 三者发散计数 & tuple判决率\\
+\midrule
+传统VGPO & 12.99/11.82/12.73 & 13.00/11.84/12.83 & 13.00/11.84/12.83 & 各1/50 & 0.83\\
+相干共同 & 155.77/125.30/213.34 & 188.78/207.06/280.72 & 171.14/125.34/290.12 & 各50/50 & 0.61\\
+相干差分 & 162.83/166.00/214.53 & 199.72/208.86/285.84 & 170.56/167.71/216.27 & 各50/50 & 0.86\\
+RGPO非相干 & 157.51/134.00/195.72 & 127.37/125.34/126.18 & 127.13/125.28/125.81 & 各50/50 & 0.97\\
+\bottomrule
+\end{tabular}}
+\end{table}
+
+表~\ref{tab:suppression}表明所测三个距离拖引臂无方法避免发散；改变弃权回退虽改变相干臂误差，却不改变50/50计数。无真实候选时元组版判决比例仍达0.61--0.97，不能把其后验归一化或低缺失状态激活率解读为已可靠识别“无真回波”。这些结果只界定所测实现的边界，不证明所有关联或恢复方法均失败。本轮未生成新的恢复方案。
+
+结果文件：\nolinkurl{tuple_confirm_a.csv}、\nolinkurl{tuple_confirm_b.csv}及\nolinkurl{tuple_confirm_stats.csv}对应表~\ref{tab:tuple}；\nolinkurl{tuple_supp_a.csv}与\nolinkurl{tuple_supp_b.csv}对应本表，均位于原项目\nolinkurl{repro/exp/out_rgpo/}。完整输入哈希与本轮同步范围见同目录验收记录。本轮未重跑这些实验。
+
+\section{复现配置与实现细节}\label{sup:reproducibility}
+
+
+\subsection{场景、初始化与随机流}\label{sup:setup}
+为验证本文提出的多平台协同状态估计算法在多重速度拖引类虚假量测条件及目标大机动飞行场景下的目标状态估计性能，构建了统一的仿真环境，并在该环境下开展多组对比实验与结果分析：
+
+\noindent\textbf{实验一：协同状态估计算法稳定性验证}\par
+
+通过构造三重线性速度拖引干扰以及四重线性与非线性混合速度拖引干扰场景，对所提出算法在强干扰条件下的滤波稳定性与收敛特性进行验证。
+
+\noindent\textbf{实验二：一致性约束有效性验证}\par
+
+通过引入没有一致性约束的概率数据关联（PDA）算法,
+分析一致性机制在多重速度拖引干扰环境中对抑制虚假量测的作用。
+
+\noindent\textbf{实验三：无干扰条件下的算法性能验证}\par
+
+在无速度拖引干扰条件下，验证所提方法不会引入额外性能退化。
+
+\noindent\textbf{实验四：与 CRLB的性能对比分析}\par
+
+将本文算法的估计误差与CRLB进行对比分析，以评估其在复杂干扰环境下的估计效率及与理论最优性能之间的差距。
+
+实验中目标在\(t\ge10\)~s 后做4g的S弯机动（常规固定翼无人机量级，机动形式见后文复现细节）。仿真采用三机60°等角初始协同观测构型，三架无人机从空间不同方位同时进入观测航路，其初始位置分别为\((11667,6667,6667)\)、\((14167,2333,6667)\)和\((15000,5223,2583)\) m，速度大小分别为300、300和400 m/s（约0.9~1.2倍声速），飞行过程中速度方向由理想接近航迹生成器（比例导引形式，导航比取3，基于目标真值状态计算，仅用于合成观测几何）实时修正；仿真以状态估计精度为评价对象，不作制导律或作战任务评价；目标初始位置为\((0,5333,4000)\) m，初始速度大小为116.7 m/s，方向位于水平面内；机载脉冲多普勒雷达量测周期为0.02 s，量测向量为机目相对距离、俯仰角、方位角与多普勒速度（式~\eqref{eq:word-13}），标称量测噪声标准差取距离10 m、俯仰角0.01 rad、方位角0.01 rad、多普勒速度20 m/s；需要说明的是，本文采用\textbf{共享噪声模型}（式~\eqref{eq:shared-noise}）：同一平台同一时刻的全部候选使用同一份四维噪声实现，候选间差异只来自欺骗偏置。其物理依据是DRFM复制的是\textbf{含噪的接收波形}——假回波由真实回波的采样副本经延时与频移生成，因而在同一波束驻留内与真回波携带同一份噪声实现；该噪声覆盖距离、俯仰、方位与多普勒\textbf{全部四个量测维度}，而非仅角度通道。该设定保持单候选边缘噪声标准差等于标称值，故不存在候选有效噪声与滤波\(R\)的口径失配（表~\ref{tab:algo} 按标称值列出），同时避免"多候选白送独立几何量测副本"所导致的人为增益。该假设的适用边界见补充材料第~\ref{app:s}~节。当任一无人机与目标的距离小于5 m时视为到达观测近界，仿真终止。滤波器以目标真实状态叠加位置/速度/加速度标准差分别为300 m、10 m/s、5 m/s$^2$的随机初值误差初始化，初始协方差按分块序取\(\mathrm{blkdiag}(300^2\boldsymbol I_3,10^2\boldsymbol I_3,5^2\boldsymbol I_3)\)。表~\ref{tab:scene}与表~\ref{tab:algo}分别汇总了仿真场景参数与算法参数，表~\ref{tab:parameters}总结了三重线性干扰与四重线性及非线性混合干扰两种场景的VGPO配置参数，其中第4重非线性干扰为抛物线拖引形式。模型集与转移概率的具体设置见第~\ref{sec:imm}~节。
+
+为便于复现，本节补充若干实现细节。
+
+（1）\textbf{目标机动与平台航迹生成}：目标在\(t<10\) s 时匀速直线飞行；\(t\ge10\) s 后施加分段恒值法向过载\( \boldsymbol a_T=A_{\mathrm{S}}\,g_0\,\boldsymbol e_n\)，其中\(A_{\mathrm{S}}=4\)为过载系数、\(\boldsymbol e_n=\mathrm{unit}(\boldsymbol v_T\times\boldsymbol k_z)\)为水平面内法向单位矢量；每当目标航向相对上一参考航向的变化量达到\(60^\circ\)，即令法向过载反向并将参考航向更新为当前航向，从而形成S形机动。无人机的理想接近航迹按比例导引形式生成，即\(\boldsymbol a_M=N\,(\boldsymbol\omega\times\boldsymbol v_M)\)，\(N=3\)，\(\boldsymbol\omega=\boldsymbol r\times\boldsymbol v_{\mathrm{rel}}/R^2\)，未计入自动驾驶仪动态；初始速度方向按接近点前置角对准以保证编队可完成近距观测。该生成器仅用于合成观测几何，不构成制导律、拦截或作战设计。
+
+（2）\textbf{滤波器模型集与转移概率}：状态量为9维\([p_x,p_y,p_z,v_x,v_y,v_z,a_x,a_y,a_z]\)，模型集为CV/CA/Singer，初始模型概率均为1/3；转移概率矩阵取对角元素0.95、非对角元素0.025（传统VGPO主表沿用原稿口径0.9/0.05，见表~\ref{tab:algo} 注）；CV与CA模型按常数速度/常数加速度的离散白噪声形式构造过程噪声协方差，Singer模型按经典Singer公式\cite{singer1970}构造，其参数为机动频率\(\lambda=1/20\)~s\(^{-1}\)、最大机动加速度\(a_{\max}=8g\)（同时用作第~\ref{sec:fusion}~节处理(ii)机动包络先验标定的参数）、加速度取极大值的概率\(P_{\max}=0.5\)、加速度为零的概率\(P_0=0.5\)，加速度方差按\(\sigma_a^2=(a_{\max}^2/3)(1+4P_{\max}-P_0)\)确定。递推后验CRLB按式~\eqref{eq:word-13} 的量测模型与上述模型集以Kalman形式的信息递推计算。
+
+（3）\textbf{候选量测生成与相关结构}：以目标真值状态生成量测后，每架无人机在每个时刻产生1条真实候选与\(N_J\)条干扰候选（三重/四重干扰下\(N_J=3/4\)，故\(M=4/5\)、跨机候选组合数为\(M^3=64/125\)）；干扰候选按第~\ref{sec:deception}~节的联合拖引模型生成。\textbf{主结果各表取\(\rho=0,\Delta R\equiv0\)}，即仅在多普勒通道叠加拖引偏置\(\Delta v_D(t)=f\!\left(\mathrm{mod}(t,T)/T\right)\cdot V\)（线性干扰取\(f(x)=x\)、抛物线干扰取\(f(x)=x^2\)），距离、俯仰角与方位角均与真实候选一致——该口径与既有工作可比，便于定位本文增量；\textbf{第~\ref{sec:robustness}~节则取\(\rho\in[0,1]\)}，并按式~\eqref{eq:rgpo-range} 叠加距离偏置、按式~\eqref{eq:rgpo-couple} 联动多普勒偏置，用于验证第~\ref{sec:theory}~节的双通道检验与可辨识性边界。两种口径共用同一场景、同一噪声模型与同一候选生成流程，仅干扰偏置不同。干扰通道在对称设定下对三架无人机同时施加（各机干扰参数相同），即每架无人机的候选集合相同。\textbf{候选噪声采用共享噪声模型}（式~\eqref{eq:shared-noise}）：同一平台同一时刻的全部候选使用同一份四维噪声实现，候选间差异只来自欺骗偏置。该假设的物理依据与理想化性质见式~\eqref{eq:shared-noise} 及其说明；若各候选独立加噪，门控内将出现\(M\)个相互独立的同一几何量测副本、可被标准PDA平均而人为压低误差，该口径伪影已在本文中排除。该假设的在线可检验性与违反时的退化见补充材料第~\ref{app:s}~节（相干共同臂的发散率由 0/30 升至 9/30）。为检验该对称假设，第~\ref{sup:ablation}~节补充了逐机干扰幅度为\([0.5,2.0,1.0]\)的非对称对照。
+
+（4）\textbf{随机性与统计方法}：随机数按“世代 $\times$ 流 $\times$ MC 编号”分配，四个流为场景/量测/候选/滤波，历史世代 \texttt{main\_v1} 使用 \(1000+j\)、\(2000+j\)、\(3000+j\)、\(4000+j\)。需要说明的是：该世代中\textbf{场景流历史上从未被消费}（\texttt{simulate\_scene} 接收随机源但未使用），因此固定几何下 100 个种子的真值轨迹逐位相同，MC 变异仅来自量测、候选与初值噪声。几何随机化世代 \texttt{main\_jgeom\_v1} 复用同一组种子（故与固定几何逐 mc 配对），但把场景流真正用于几何抽样；锁箱世代 \texttt{lockbox\_v2} 使用 \(1.2\times10^{6}\) 起的独立基址，与历史任何流在整数与抽样指纹两个层面均不相交（审计见 \texttt{python -m src.seeds}，其中同时复现了旧方案下“锁箱 mc=2000 的场景种子 = 历史 mc=0 的候选种子”这一碰撞作为反例）。表~\ref{tab:rmse_main}、表~\ref{tab:ablation_fb}及第~\ref{sup:ablation}~节各表的配对差置信区间均由配对bootstrap给出（重采样10000次，随机种子0，取2.5\%与97.5\%分位数，以单次蒙特卡洛运行内的时间平均误差为配对单位）；除另有说明外，主结果、消融与非对称对照的蒙特卡洛次数均为50次。
+
+为避免不同实验的信息前提被混读，表~\ref{tab:infocond} 汇总了全文各主要结果的\textbf{信息条件}（是否要求跨帧候选编号一致、是否要求跨平台编号一致、参考/锚定来源、是否使用真值标签、数据种子范围）。\textbf{正文各节不再重复说明同一组前提，凡结论均以该表所列条件为限}：例如第~\ref{sec:robustness}~节的联合拖引结果使用候选0作为参考，属\textbf{带身份参考的上界}；而第~\ref{sec:overall}~节--5.2.3节的传统VGPO结果不依赖任何真值标签。不同合同下的数值不可直接相减或互相外推。
+
+典型仿真场景下的机目运动轨迹与机目距离曲线如图~\ref{fig:scene} 所示；三机与目标的几何关系在整个评估窗内保持稳定，不出现视线张角的剧烈变化。
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.76\linewidth]{latex/media/fig_scene.png}
+\caption{典型仿真场景下的机目运动轨迹与机目距离曲线}
+\label{fig:scene}
+\end{figure}
+
+\begin{table}[htbp]
+\centering
+\caption{仿真场景参数}\label{tab:scene}
+\begin{tabularx}{0.92\linewidth}{@{}p{0.30\linewidth}X@{}}
+\toprule
+定义 & 数值\\
+\midrule
+无人机数量 & 3\\
+初始协同观测构型 & 60°等角构型\\
+\(M_1/M_2/M_3\)初始位置 & \((11667,6667,6667)\)、\((14167,2333,6667)\)、\((15000,5223,2583)\) m\\
+无人机速度大小 & 300 / 300 / 400 m/s\\
+接近航迹生成系数（比例导引形式） & 3\\
+目标初始位置 & \((0,5333,4000)\) m\\
+目标初始速度 & 116.7 m/s（水平面内）\\
+目标机动形式 & 4g S形机动\\
+量测周期 & 0.02 s\\
+观测近界截断距离 & 5 m\\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+
+
+\subsection{PCRLB递推与初值}\label{sup:pcrlb}
+克拉美罗下界（CRLB）给出了无偏估计量的误差协方差能够达到的理论最下限。在目标跟踪系统中，待估计量是随目标运动方程持续演化的状态序列\(X(k)\)，量测在每个时刻不断提供新信息，因此应采用\textbf{递推形式的后验克拉美罗下界（Posterior CRLB, PCRLB）}\cite{tichavsky1998}来刻画动态估计问题的性能极限。
+
+考虑目标状态方程与多机联合量测方程，在过程噪声\(\mathbf{w}(k)\sim N(0,\mathbf{Q})\)、量测噪声\(v_i(k)\sim N(0,R)\)均为高斯的条件下，后验协方差下界满足如下Riccati型递推（与卡尔曼协方差递推等价）：
+
+
+\begin{equation}
+\begin{aligned}
+\mathbf{P}(k\mid k-1)&=\mathbf{F}\mathbf{P}(k-1\mid k-1)\mathbf{F}^{\mathrm T}+\mathbf{Q}\\
+\mathbf{S}(k)&=\mathbf{H}(k)\mathbf{P}(k\mid k-1)\mathbf{H}^{\mathrm T}(k)+\mathbf{R}\\
+\mathbf{K}(k)&=\mathbf{P}(k\mid k-1)\mathbf{H}^{\mathrm T}(k)\mathbf{S}^{-1}(k)\\
+\mathbf{P}(k\mid k)&=\bigl(\mathbf{I}-\mathbf{K}(k)\mathbf{H}(k)\bigr)\mathbf{P}(k\mid k-1)
+\end{aligned}
+\label{eq:pcrlb}
+\end{equation}
+
+
+式中：\(\mathbf{F}\)为状态转移矩阵；\(\mathbf{Q}\)为过程噪声协方差；\(\mathbf{H}(k)=[H_1^{\mathrm T}(k),\cdots,H_N^{\mathrm T}(k)]^{\mathrm T}\)为多机联合量测雅可比矩阵；\(\mathbf{R}=\mathrm{blkdiag}(R,\cdots,R)\)为联合量测噪声协方差。初始时刻的后验信息由先验与首帧量测共同决定，其协方差为\(\mathbf{P}(0\mid 0)=\bigl(\mathbf{P}_0^{-1}+\mathbf{H}^{\mathrm T}(0)\mathbf{R}^{-1}\mathbf{H}(0)\bigr)^{-1}\)。式~\eqref{eq:pcrlb} 的对角元给出对应状态分量的方差下界，取对角元平方根即得各分量的误差标准差下界。
+
+需要说明的是，式~\eqref{eq:pcrlb} 采用局部线性化的量测雅可比，仅在误差较小的弱非线性情形下近似成立；且\(\mathbf{F},\mathbf{Q}\)按单一Singer模型选取，而实际估计器采用CV/CA/Singer多模型IMM结构。因此，本文给出的下界应理解为与过程噪声模型同源、经线性化近似的性能参考（近似PCRLB），不构成严格意义下的全局最优性证明；其与多模型估计器的口径差异在结果分析中说明。第~\ref{sec:results}~节实验将给出所提算法的估计误差与该参考下界的比值。
+
+
+
+\subsection{纯角度几何判据、可观性与多步边界}\label{sup:geometry}
+在分布式探测系统中，纯角度几何基准可提供不受速度欺骗影响的参考。单机虽具\(\sigma_R=10\) m量级的径向测距能力，但在\(R\approx5\sim15\) km、\(\sigma_{\mathrm{ang}}=0.01\) rad下，横向位置不确定度\(R\sigma_{\mathrm{ang}}\approx50\sim150\) m远大于径向误差，故单机距离无法单独给出三维位置，仍需多机角度交会提供切向约束。但这不构成"放弃距离通道"的理由：距离欺骗对几何基准的影响表现为沿视线的径向平移，而径向平移不改变任何视线角度，纯角度基准对距离拖引结构性不可见；若仅用角度交会，距离维的全部欺骗信息被丢弃。基于此，本文的一致性检验同时使用角度与距离，仅在需要与既有纯角度口径对照时保留后者。
+
+考虑由三架无人机组成的探测网络中，
+其在惯性坐标系下的位置分别为\emph{P}\textsubscript{M1}、\emph{P}\textsubscript{M2}和\emph{P}\textsubscript{M3}。三架无人机在其本地坐标系中获得包含俯仰角和偏航角的视线（LOS）量测。这些角度量测被转换到一个公共惯性坐标系下的单位方向向量为：
+
+
+\begin{equation}
+u_i=\begin{bmatrix}\cos\alpha_i\cos\beta_i\\\cos\alpha_i\sin\beta_i\\\sin\alpha_i\end{bmatrix},\quad i=1,2,3
+\label{eq:word-24}
+\end{equation}
+
+
+理论上三条视线应相交于目标；有噪时以最小二乘求几何位置\(P_g\)，即最小化各点到三条视线的垂距平方和。该解为闭式、仅依赖当前角度量测（不含滤波预测），故可作为后续一致性检验的空间基准。
+
+在获得瞬时几何位置的基础上，进一步引入多普勒量测以构建速度一致性约束。在多重速度拖引干扰场景下，干扰通常施加于机载脉冲多普勒雷达。在任意时刻，机载脉冲多普勒雷达量测信息中存在多个有效回波。量测信息可表示为：
+
+
+\begin{equation}
+Z_{k,i}=\left\{z_{k,i}^{(1)},z_{k,i}^{(2)},\ldots,z_{k,i}^{(M)}\right\}
+\label{eq:word-26}
+\end{equation}
+
+
+\(Z_{k,i}\)表示\(k\)时刻第\(i\)架无人机的量测集合，\(z_{k,i}^{(n)}\)表示\(k\)时刻第\(i\)架无人机机载脉冲多普勒雷达接收到的第\(n\)个候选量测，\(M\)为该时刻的候选数（含真实回波与干扰回波）。该上标候选记法与第~\ref{sup:double-count}~节的\(z_{k,i}^{(n)}\)、\(d_{p,i}^{(n)}\)一致。
+
+因此，仅依赖单架无人机的多普勒量测难以可靠判定真实目标速度，通过三架分布不同的无人机对同一目标的协同测量，就能够建立关于目标三维速度分量的线性方程组。已知三架无人机的速度为\emph{\textbf{V}}\textsubscript{M\emph{i}}，无人机与目标的单位视线向量为式~\eqref{eq:word-24}。多普勒速度\emph{V}\textsubscript{D\emph{i}}定义为目标与无人机的相对速度在视线方向上的投影：
+
+
+\begin{equation}
+V_{Di}=(V_T-V_{\mathrm Mi})\cdot u_i
+\label{eq:word-29}
+\end{equation}
+
+
+整理式~\eqref{eq:word-29}~可得到
+
+
+\begin{equation}
+\begin{bmatrix}u_1^{\mathrm T}\\u_2^{\mathrm T}\\u_3^{\mathrm T}\end{bmatrix}\cdot V_{\mathrm T}=\begin{bmatrix}V_{\mathrm D1}+V_{\mathrm M1}\cdot u_1\\V_{\mathrm D2}+V_{\mathrm M2}\cdot u_2\\V_{\mathrm D3}+V_{\mathrm M3}\cdot u_3\end{bmatrix}
+\label{eq:word-30}
+\end{equation}
+
+
+令
+\begin{equation}
+U=\begin{bmatrix}u_1^{\mathrm T}\\u_2^{\mathrm T}\\u_3^{\mathrm T}\end{bmatrix},\qquad b=\begin{bmatrix}V_{\mathrm D1}+V_{\mathrm M1}\cdot u_1\\V_{\mathrm D2}+V_{\mathrm M2}\cdot u_2\\V_{\mathrm D3}+V_{\mathrm M3}\cdot u_3\end{bmatrix}
+\label{eq:word-31-32}
+\end{equation}
+
+
+则式~\eqref{eq:word-30}~简化为：
+
+
+\begin{equation}
+U\cdot V_{\mathrm T}=b
+\label{eq:word-33}
+\end{equation}
+
+
+当矩阵U可逆时，即三架无人机视线向量不在同一平面，一次测量就可以解算出目标速度\emph{V}\textsubscript{T}。
+
+对第\(m\)个候选组合反解目标速度后，按
+\begin{equation}
+P^m(k)=P_g(k-1)+V_{\mathrm T}^{\,m}\Delta t
+\label{eq:word-34}
+\end{equation}
+积分得到速度积分位置：若该组合来自真实目标，积分位置与几何位置一致；若来自干扰，则偏离。由此定义位置一致性误差\(e_{\mathrm{pos}}=\|P(k)-P_g(k)\|\)，作为候选组合物理合理性的量化指标，而非直接定位结果。
+
+多重干扰下，每架无人机的机载雷达可同时输出多个候选多普勒量测。设单机候选数为\(M\)，三架无人机的候选组合将形成\(M^{3}\)个跨机候选组合（四重干扰下\(M=5\)，共125个组合）。对每个组合\(c=(m_1,m_2,m_3)\)按式~\eqref{eq:word-33} 反解目标速度，再由式~\eqref{eq:word-34} 积分并计算该组合的位置一致性误差\(e_{\mathrm{pos}}^{\,c}\)。
+
+由于几何定位噪声与候选速度反演误差的存在，一致性误差\(e_{\mathrm{pos}}\)需以其自身的统计尺度归一化后才能作为判据使用。在候选组合为真的假设下，积分位置误差近似服从零均值高斯分布，其协方差由相邻两时刻的几何定位协方差与速度反演协方差共同决定：
+
+
+\begin{equation}
+\begin{gathered}
+\boldsymbol{C}_{\mathrm{tot}}\approx \boldsymbol{C}_g(k)+\boldsymbol{C}_g(k-1)+\Delta t^2\,\boldsymbol{C}_v,\qquad
+\boldsymbol{C}_v=\boldsymbol{U}^{-1}\boldsymbol{R}_d\boldsymbol{U}^{-\mathrm T}\\
+\boldsymbol{C}_g=\sigma_{\mathrm{ang}}^2\Bigl(\sum_{i=1}^{3}\frac{1}{\hat{R}_i^2(k)}\bigl(\boldsymbol{I}-u_iu_i^{\mathrm T}\bigr)\Bigr)^{-1}
+\end{gathered}
+\label{eq:pos-cov}
+\end{equation}
+
+
+式~\eqref{eq:pos-cov} 中括号内矩阵\textbf{先对三个平台求和、再整体求逆}；\(\sigma_{\mathrm{ang}}\)以 rad 计时为无量纲量，故\(\boldsymbol{C}_g\)的量纲为\(\mathrm m^2\)（矩阵内部为\(\mathrm m^{-2}\)）；代码实现与式~\eqref{eq:pos-cov} 一致。
+
+式中：\(\sigma_{\mathrm{ang}}\)为角度噪声标准差；\(\hat{R}_i(k)\)为机目距离，\(1/\hat{R}_i^2\)来自角度噪声的横向误差传播\(\hat{R}_i\sigma_{\mathrm{ang}}\)；\(\boldsymbol{R}_d=\mathrm{diag}(\sigma_d^2,\sigma_d^2,\sigma_d^2)\)。据此构造组合\(c\)的白化统计量：
+
+
+\begin{equation}
+q^{\,c}=\bigl(P^{\,c}(k)-P_g(k)\bigr)^{\mathrm T}\boldsymbol{C}_{\mathrm{tot}}^{-1}\bigl(P^{\,c}(k)-P_g(k)\bigr)
+\label{eq:pos-chi2}
+\end{equation}
+
+
+在候选组合为真的假设下，\(q^{\,c}\)近似服从自由度为3的\(\chi^2\)分布。由于一致性统计量按组合计算、而量测关联按单机单候选进行，进一步采用最小误差边缘化将其映射到单机候选：含第\(i\)架无人机第\(n\)个候选的所有组合中，取最小统计量作为该候选的一致性评分，即
+
+
+\begin{equation}
+d_{p,i}^{(n)}=\min_{c\ni(i,n)}q^{\,c}
+\label{eq:combo-marg}
+\end{equation}
+
+
+式中：\(c\ni(i,n)\)表示组合\(c\)中第\(i\)架无人机选取的恰为第\(n\)个候选。式~\eqref{eq:combo-marg} 表明：候选评分取其参与的所有组合中最优的物理一致性度量——只要存在一个跨越该候选的运动学自洽组合，该候选即被保留。据此，候选筛检判据取
+
+
+\begin{equation}
+d_{p,i}^{(n)}\le T,\qquad T=48
+\label{eq:pos-threshold}
+\end{equation}
+
+
+超过门限的候选判为不一致。需要强调的是，门限\(T\)并非直接取单组合高斯假设下的\(\chi^2_{3,0.99}=11.34\)，而是由\textbf{零假设经验分布标定}：在候选组合为真的前提下，受几何定位与速度反演在病态构型帧上的非线性放大影响，逐组合统计量\(q^{\,c}\)的尾部远重于\(\chi^2(3)\)——其经验分布主体（中位数约2.6）与\(\chi^2(3)\)接近，但0.99经验分位达48左右，而\(\chi^2_{3,0.99}=11.34\)在边缘化统计量\(d_p\)的经验分布中实际只对应0.95分位（实测详见第~\ref{sup:ablation}~节）。因此本文改用零假设经验校准门限\(T=48\)，使零假设下的误剔率约为1\%，并在第~\ref{sup:ablation}~节给出\(T\)的敏感性曲线，以说明结论对该取值的依赖程度。
+
+工程实现中作如下兜底处理：当全部候选均被剔除时，为避免量测中断，全部放行并交由后续处理。该兜底形式的选择依据是：零假设诊断表明，全剔除帧上若改为只保留\(d_p\)最小的候选，仅约10\%至14\%的情形能保住真实目标候选（因为被保留者多数是干扰候选），而"全部放行"可保证真实候选不被丢弃；其代价是同时放行干扰候选，故本文将其定位为量测中断的工程保护措施而非精度增益手段。门限取\(T=48\)时全剔除帧占比约1\%（对比\(T=11.34\)时约5\%）。在本仿真场景中三机视线构型始终远离病态（\(\kappa(\boldsymbol{U})\) 恒小于\(10^{4}\)，病态构型跳过率为0，见第~\ref{sup:ablation}~节）。
+
+
+需要强调的是，时空一致性检验在本文方法链中的角色是\textbf{形式化的物理一致性约束}，而非可用判别器或告警装置。由于最小误差边缘化对单个候选较为宽松（跨机候选组合可相互补偿），且采样间隔带来固有尺度约束——在\(\Delta t=0.02\)\,s 的采样下，表~\ref{tab:parameters} 所列拖引偏置（16.7$\sim$73.3 m/s）引起的单步积分位置差仅约0.3$\sim$1.5 m，远小于本场景几何定位不确定度（数十米量级）——单步检验无法可靠区分小幅偏置的真假组合。第~\ref{sup:ablation}~节的两组专项诊断给出该判据的确切边界：其候选级判别力AUC$\approx$0.5（真/假候选评分分布几乎重合），且\textbf{组合级统计量在与主结果一致的评估窗内从未超限}（组合级$\max_c q^{\,c}$ 的0.99分位仅约11.5，远低于门限48），全程的少量超限帧主要由近界段几何病态化引起、与是否存在干扰无稳定对应。第~\ref{sec:single-channel}~节"多步检验与判据的可分辨边界"进一步给出该判据的适用域：该判据的定量表现仅限于所测试的条件与积分间隔，具体扫描范围及各场景结果以第~\ref{sec:single-channel}~节多步专项分析为准，不作超出该范围的推断。因此本文将该模块定位为"物理一致性约束的形式化与作用边界界定"，目标状态的统计融合仍全部由后续的概率数据关联与 IMM 滤波承担，门限的实际剔除/保留统计见第~\ref{sup:ablation}~节。
+
+当目标释放多重速度拖引干扰时，候选组合的一致性评分与经验校准门限可作为概率数据关联之前的形式化物理约束；由前述边界分析可知，在本文评估窗内该约束不触发剔除，因此量测的统计融合仍由概率数据关联（PDA）与 IMM 滤波承担，该模块的作用限于物理一致性约束的形式化与作用边界界定。
+
+\paragraph{几何构型与可观性}
+
+速度反演式~\eqref{eq:word-33} 的解算精度直接取决于视线矩阵\(\boldsymbol{U}\)的条件数：当三架无人机的视线向量接近共面时，\(\boldsymbol{U}\)趋于奇异，多普勒噪声经矩阵求逆被显著放大。以条件数
+\begin{equation}
+\kappa(\boldsymbol{U})=\frac{\sigma_{\max}(\boldsymbol{U})}{\sigma_{\min}(\boldsymbol{U})}
+\label{eq:condU}
+\end{equation}
+作为几何构型良态程度的度量：\(\kappa(\boldsymbol{U})\)越小，视线构型越接近正交，速度反演越稳健。需要说明的是，式~\eqref{eq:word-31-32} 中\(\boldsymbol{U}\)的各行均为单位视线矢量，其行模长被量测几何唯一确定，故\(\kappa(\boldsymbol{U})\)对各行量纲/单位的选取不敏感，可直接在不同构型间比较。对5°、30°、60°三种等角初始协同观测构型，实测条件数分别为\(\kappa(\boldsymbol{U})=13.15,\ 5.81,\ 3.44\)，即观测构型夹角越大、几何构型越良态。第~\ref{sec:results}~节的仿真即采用其中几何最良态的60°构型（\(\kappa(\boldsymbol{U})=3.44\)）。
+
+对于整体状态估计问题，进一步采用总可观性矩阵的条件数作为定量判据。定义
+\begin{equation}
+\boldsymbol{O}=\begin{bmatrix}\boldsymbol{H}(0)\\[2pt]\boldsymbol{H}(1)\boldsymbol{\Phi}(1,0)\\\vdots\\\boldsymbol{H}(m-1)\boldsymbol{\Phi}(m-1,0)\end{bmatrix}
+\label{eq:obsm}
+\end{equation}
+其中\(\boldsymbol{\Phi}(k,0)\)为状态转移矩阵的累积；\(\kappa(\boldsymbol{O})=\sigma_{\max}(\boldsymbol{O})/\sigma_{\min}(\boldsymbol{O})\)越小表示估计问题越良态。实测表明：三机协同相比单机可使\(\kappa(\boldsymbol{O})\)下降约3个数量级（固定观测窗长\(m=100\)时，5°、30°、60°构型分别由\(9.97\times10^4\)、\(1.17\times10^5\)、\(2.34\times10^5\)降至\(69.5\)、\(32.3\)、\(21.7\)），且该指标需在固定观测窗长\(m\)下比较。需要说明的是，秩判据\(\mathrm{rank}(\boldsymbol{O})=n\)在本问题中区分度有限（单机构型下总可观性矩阵亦满秩），故本文以条件数\(\kappa(\boldsymbol{O})\)作为主要可观性判据。
+
+还需指出，原始\(\kappa(\boldsymbol{O})\)是尺度相关的（距离、角度、多普勒量纲不同）。为消除尺度依赖，本文同时给出噪声白化判据
+\begin{equation}
+\boldsymbol{J}=\sum_{k}\tilde{\boldsymbol{H}}^{\mathrm T}(k)\boldsymbol{R}^{-1}\tilde{\boldsymbol{H}}(k),\qquad
+\kappa(\boldsymbol{J})=\frac{\sigma_{\max}(\boldsymbol{J})}{\sigma_{\min}(\boldsymbol{J})},
+\label{eq:condJ}
+\end{equation}
+其中\(\tilde{\boldsymbol{H}}(k)=\boldsymbol{H}(k)\boldsymbol{\Phi}(k,0)\)，\(\boldsymbol{R}\)为量测噪声协方差。固定\(m=100\)时，单机→三机的\(\kappa(\boldsymbol{J})\)由\(1.40\times10^6/1.73\times10^6/7.85\times10^6\)降至\(7.53\times10^3/3.60\times10^3/2.26\times10^3\)（5\(^\circ\)/30\(^\circ\)/60\(^\circ\)），与\(\kappa(\boldsymbol{O})\)的定性结论一致，说明协同增益不是单位选取的假象。图~\ref{fig:obs}给出三种构型下\(\kappa(\boldsymbol{U})\)与\(\kappa(\boldsymbol{O})\)的对比。
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.68\linewidth]{latex/media/fig_obs.png}
+\caption{初始协同观测构型对速度解算与系统可观性的影响}
+\label{fig:obs}
+\end{figure}
+
+\paragraph{多步检验与判据的可分辨边界}
+
+设一致性检验的有效积分间隔为\(K\Delta t\)（把"相邻时刻"推广为"滞后\(K\)步"，其余口径不变）。VGPO偏置导致的位置偏差随\(K\Delta t\)线性增长，而几何定位不确定度仅按\(\sqrt{\mathrm{tr}\,\boldsymbol{C}_{tot}/3}\)缓增，故可分辨的量级条件是\(\Delta v\cdot K\Delta t\)与几何不确定度同量级。据此扫描\(K\in\{1,3,10,25,50,100,250\}\)（0.02\(\sim\)5 s，\(MC=5\)），并按各\(K\)下真候选边缘化评分的经验0.99分位标定门限（使误警率约1\%），结果如图~\ref{fig:mstep}所示。
+
+候选级判别在全程不可行：AUC由0.500单调缓降至0.448，说明跨机组合补偿稳定存在——任一候选（含干扰）总能通过其余两机的候选选择得到"自洽"组合，故该判据不能用于候选级清洗。组合级告警则随间隔上升：检出率由0.02 s的1.2\%/1.3\%升至0.2 s的7.2\%/11.1\%、0.5 s的28.1\%/42.1\%，在\(K\Delta t=1\) s达54.5\%/69.4\%，并饱和于2 s的64.9\%/80.8\%与5 s的70.5\%/78.9\%（三重线性/四重混合）。物理解释是：\(K\Delta t\ge1\) s时\(\Delta v\cdot K\Delta t\approx16.7\sim73.3\) m已与几何不确定度同量级，不自洽组合开始被稳定识别；饱和上限由"连真组合也不自洽"的机动病态帧决定。该结论与端到端对照一致（第~\ref{sup:ablation}~节第6条）：三种采样率下候选级筛检均不改善位置精度。因此本文主实验（0.02 s单步）中该判据不改变候选集合，其定位是物理一致性约束的形式化与作用边界界定，而非候选清洗器。
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.78\linewidth]{latex/media/fig_mstep.png}
+\caption{位置域一致性判据的可分辨边界（滞后$K$步扫描，$MC=5$ 诊断）:(a) 候选级判别力AUC随有效积分间隔$K\Delta t$的变化（始终位于0.5附近，虚线为可分辨判据的经验门槛0.7）；(b) 在零假设误警率标定为约1\%时组合级告警的检出率随$K\Delta t$的变化}
+\label{fig:mstep}
+\end{figure}
+
+
+
+\subsection{重复计权的条件性分析}\label{sup:double-count}
+在获得单机候选量测的一致性评分\(d_{p,i}^{(n)}\)（式~\eqref{eq:combo-marg}）后，一种直观的启发式思路是构造指数型连续衰减权重\(w_{\mathrm{cons}}^{(n)}=\exp\bigl(-\tfrac{\alpha}{2}\,d_{p,i}^{(n)}\bigr)\)（\(\alpha>0\)为调节指数），将其与式~\eqref{eq:word-39} 的统计似然\(L_s^{(n)}\)相乘来修正后验关联概率\(\beta_k^{(n)}\)。本文通过机理分析与实测验证指出如下\textbf{双重计数命题}：
+
+在四维机载脉冲多普勒雷达量测向量\(Z_i=[R_i,\alpha_i,\beta_i,V_{Di}]^{\mathrm T}\)下，由于VGPO干扰保持机目距离及视线角度与真实目标一致、仅在径向速度维叠加偏置（第~\ref{sec:deception}~节），式~\eqref{eq:word-39} 中的新息马氏距离\((v_k^{(n)})^{\mathrm T}S_k^{-1}v_k^{(n)}\)已在多普勒维度上以预测协方差与量测方差\(\sigma_d^2\)完成统计白化；而式~\eqref{eq:pos-chi2}--\eqref{eq:combo-marg}构造的白化统计量同样以多普勒噪声协方差\(\boldsymbol{R}_d=\mathrm{diag}(\sigma_d^2,\sigma_d^2,\sigma_d^2)\)为尺度基准。若在门控内将两者相乘，其对应的对数似然为
+
+\begin{equation}
+\ln\tilde{L}_k^{(n)}=-\frac{1}{2}(v_k^{(n)})^{\mathrm T}S_k^{-1}v_k^{(n)}-\frac{\alpha}{2}\,d_{p,i}^{(n)}+\mathrm{const}
+\label{eq:double-count}
+\end{equation}
+
+该操作在信息论上等价于把同一帧多普勒证据计入两次。在拖引周期初段的弱偏置区（\(|v_j(t)|\lesssim2\sigma_d\)），真假统计量的次序因随机噪声频繁倒置，连续加权会指数放大误排序，使关联分布过度自信并劣化精度；\(\alpha\to0\)时回落到标准PDAF水平。反之，用式~\eqref{eq:pos-threshold}的经验门限作筛检（门内\(\alpha=0\)）至少在统计上不引入重复计权，但只提供弱监督信号：受最小误差边缘化的组合补偿限制，该统计量对真假候选的判别力接近随机，故其定位是物理一致性约束与作用边界分析，而非候选清洗器或告警装置。需要说明，上述劣化在本文主结果的共享噪声模型下不再出现（各候选共用同一几何噪声实现，多候选平均不提供独立的几何信息增益），故该机理应理解为候选携带独立几何信息时的条件性结论。
+
+
+
+\subsection{IMM经典递推}\label{sup:imm}
+假设系统的先验模型数为N，k时刻概率最大的模型为主导模型M\textsubscript{k}，由M\textsuperscript{i}切换到M\textsuperscript{j}的转移概率矩阵为(i,j=1,\ldots N)：
+
+
+\begin{equation}
+\mathbf{P}_{ij}=\begin{bmatrix}p_{11}&p_{12}&\cdots&p_{1N}\\p_{21}&p_{22}&\cdots&p_{2N}\\\vdots&\vdots&\ddots&\vdots\\p_{N1}&p_{N2}&\cdots&p_{NN}\end{bmatrix}
+\label{eq:word-52}
+\end{equation}
+
+
+\(P_{ij}\)和M\textsuperscript{j}的初始概率\(\mu_0^j\)都是已知，IMM算法是递推的，每步递推主要有4步组成。
+
+\noindent\textbf{步骤1　状态估计的交互式作用}\par
+
+根据输入交互概率对当前状态和估计方差进行交互计算
+
+
+\begin{equation}
+\hat{X}_j^0(k\mid k)=\sum_{i=1}^{N}\hat{X}_i(k\mid k)\mu_{j/i}(k)
+\label{eq:word-54}
+\end{equation}
+
+
+
+\begin{equation}
+\begin{aligned}
+P_j^0(k\mid k)={}&\sum_{i=1}^{N}\Bigl\{P_i(k\mid k)\\
+&+\bigl[\hat{X}_j^0(k\mid k)-\hat{X}_i(k\mid k)\bigr]\bigl[\hat{X}_j^0(k\mid k)-\hat{X}_i(k\mid k)\bigr]^{\mathrm T}\Bigr\}\mu_{j/i}(k)
+\end{aligned}
+\label{eq:word-55}
+\end{equation}
+其中输入交互概率为：
+
+
+\begin{equation}
+\mu_{j/i}(k)=\frac{P_{ij}\mu_i(k)}{\mu_j(k+1\mid k)}
+\label{eq:word-56}
+\end{equation}
+
+
+
+\begin{equation}
+\mu_j(k+1\mid k)=\sum_{i=1}^{N}P_{ij}\mu_i(k)
+\label{eq:word-57}
+\end{equation}
+
+
+\noindent\textbf{步骤2　EKF滤波}\par
+
+将\(\hat{X}_j^0(k\mid k)\)、\(P_j^0(k\mid k)\)作为k时刻模型j的输入，应用EKF滤波器得到相应的滤波输出\(\hat{X}_j(k+1\mid k+1)\)、\(P_j(k+1\mid k+1)\)，其中量测雅可比矩阵\(H_i\)由式~\eqref{eq:word-17} 给出，滤波方程为标准扩展卡尔曼预测与更新形式。
+
+\noindent\textbf{步骤3　模型概率更新}\par
+
+IMM算法采用极大似然函数法评估预设模型和目标实际运动状态的匹配程度，并据此给出预设模型所占权重，实现模型的更新。模型j的更新概率为：
+
+
+
+
+
+在高斯假设下，似然函数为
+
+
+\begin{equation}
+\begin{aligned}
+\Lambda_j(k+1)={}&\frac{1}{\sqrt{|2\pi S_j(k+1)|}}\\
+&\cdot\exp\!\left[-\frac12 v_j^{\mathrm T}(k+1)S_j^{-1}(k+1)v_j(k+1)\right]
+\end{aligned}
+\label{eq:word-63}
+\end{equation}
+\(v_j(k+1)\)为模型j滤波残差，\(S_j(k+1)\)为相应协方差，计算步骤在EKF中体现。
+
+\noindent\textbf{步骤4　模型输出}\par
+
+利用模型j的更新概率得到状态估计值与估计误差的协方差阵：
+
+
+
+
+
+
+
+
+
+式中：模型概率\(\mu_j(k+1)\)同时加权模型内协方差\(P_j\)与模型间均值离散项，二者均位于求和号之内；若将\(\mu_j\)仅乘在离散项之外，则不能保证混合协方差的半正定性与一致性。
+
+
+IMM滤波器的一步递归示意图如图~\ref{fig:imm}~所示。
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.62\linewidth]{latex/media/image68.png}
+\caption{IMM滤波器的一步递归示意图}\label{fig:imm}
+\end{figure}
+
+
+
+\subsection{近似Chernoff融合的两两形式及归一化}\label{sup:acf}
+在分布式多传感器目标跟踪系统中，各本地传感器采用交互式多模型（IMM）滤波器以应对目标运动模型不确定性，其输出由各模型条件下的状态估计加权组合而成，构成高斯混合模型（Gaussian
+Mixture Model,
+GMM）形式的后验状态分布。在此背景下，融合中心需要对来自多个传感器的高斯混合轨迹进行有效融合，以获得更高精度的全局状态估计。然而，传统分布式融合方法（如加权平均、协方差交叉（CI）\cite{julier1997}等）大多基于单高斯分布假设，通常需要对高斯混合分布进行矩匹配近似处理。这一过程不可避免地会造成概率分布信息损失，从而影响融合性能。为此，本文采用一种基于
+Chernoff
+融合准则的高斯混合融合方法\cite{ahmed2012}，直接在概率密度函数层面对高斯混合模型进行融合，并通过对高斯混合分布的幂次项进行近似处理，将原本难以解析的融合问题转化为具有封闭形式的高斯混合融合表达式。
+
+设来自两个以高斯混合形式给出的传感器的局部后验概率密度函数分别为：
+
+
+\begin{equation}
+p_1(x)=\sum_{i=1}^{n^{M_1}}\xi_{i,M_1}N(x;\mu_{i,M_1},\sigma_{i,M_1}^{2})
+\label{eq:word-69}
+\end{equation}
+
+
+
+\begin{equation}
+p_2(x)=\sum_{j=1}^{n^{M_2}}\xi_{j,M_2}N(x;\mu_{j,M_2},\sigma_{j,M_2}^{2})
+\label{eq:word-70}
+\end{equation}
+
+
+其中，\(n^{M_1}=n^{M_2}\)为高斯分量数量，\(\xi_{i,M_1}\)表示\(M_1\)中第\(i\)个分量的权重，\(\mu_{i,M_i}\)与\(\sigma_{i,M_i}^{2}\)分别表示\(M_i\)中第\(i\)个分量的均值向量与协方差矩阵。
+
+根据 Chernoff 融合规则，其融合结果可表示为：
+
+
+
+
+
+其中~\(w \in \lbrack 0,1\rbrack\)~为融合权重参数。通过对高斯混合分布幂次项的一阶近似，可将上述表达式进一步化简为新的高斯混合形式，公式如下：
+
+
+\begin{equation}
+\bigl(p_1(x)\bigr)^w\approx\frac{\displaystyle\sum_{i=1}^{n^{M_1}}(\xi_{i,M_1})^w N\!\left(x;\mu_{i,M_1},\frac{\sigma_{i,M_1}^{2}}{w}\right)}{C^{M_1}}
+\label{eq:word-76}
+\end{equation}
+
+
+
+\begin{equation}
+\bigl(p_2(x)\bigr)^{1-w}\approx\frac{\displaystyle\sum_{j=1}^{n^{M_2}}(\xi_{j,M_2})^{1-w}N\!\left(x;\mu_{j,M_2},\frac{\sigma_{j,M_2}^{2}}{1-w}\right)}{C^{M_2}}
+\label{eq:word-77}
+\end{equation}
+
+
+\(C^{M_1},C^{M_2}\)是与x无关的常数，将上式代入，得到
+
+
+\begin{equation}
+\begin{aligned}
+p(x)={}&\frac1C\sum_{i=1}^{n^{M_1}}\sum_{j=1}^{n^{M_2}}(\xi_{i,M_1})^w(\xi_{j,M_2})^{1-w}\\
+&\cdot N\!\left(x;\mu_{i,M_1},\frac{\sigma_{i,M_1}^{2}}{w}\right)N\!\left(x;\mu_{j,M_2},\frac{\sigma_{j,M_2}^{2}}{1-w}\right)\\
+={}&\frac1C\sum_{i=1}^{n^{M_1}}\sum_{j=1}^{n^{M_2}}(\xi_{i,M_1})^w(\xi_{j,M_2})^{1-w}c_{ij}N(x;\mu_{ij},\sigma_{ij}^{2})
+\end{aligned}
+\label{eq:word-78}
+\end{equation}
+
+
+其中，\(C\)为保证\(\int p(x)\,\mathrm dx=1\)的归一化常数，且各融合分量的均值、协方差与交叉系数分别为
+
+
+\begin{equation}
+\begin{aligned}
+\mu_{ij}&=\sigma_{ij}^{2}\left(w(\sigma_{i,M_1}^{2})^{-1}\mu_{i,M_1}+(1-w)(\sigma_{j,M_2}^{2})^{-1}\mu_{j,M_2}\right),\\
+\sigma_{ij}^{2}&=\left(w(\sigma_{i,M_1}^{2})^{-1}+(1-w)(\sigma_{j,M_2}^{2})^{-1}\right)^{-1},\\
+c_{ij}&=c_{i}^{(w)}\,c_{j}^{(1-w)}\,c_{ij}^{\mathrm{cross}}
+\end{aligned}
+\label{eq:word-80}
+\end{equation}
+
+
+
+\begin{equation}
+\begin{aligned}
+c_{i}^{(w)}&=(2\pi)^{\frac{d(1-w)}{2}}\,w^{-\frac{d}{2}}\,\bigl|\sigma_{i,M_1}^{2}\bigr|^{\frac{1-w}{2}},\\
+c_{j}^{(1-w)}&=(2\pi)^{\frac{dw}{2}}\,(1-w)^{-\frac{d}{2}}\,\bigl|\sigma_{j,M_2}^{2}\bigr|^{\frac{w}{2}},\\
+c_{ij}^{\mathrm{cross}}&=\bigl|\,2\pi\,\Sigma_{ij}\,\bigr|^{-1/2}\exp\!\left[-\tfrac12\bigl(\mu_{i,M_1}-\mu_{j,M_2}\bigr)^{\mathrm T}\Sigma_{ij}^{-1}\bigl(\mu_{i,M_1}-\mu_{j,M_2}\bigr)\right]\\
+&=N\!\left(\mu_{i,M_1};\,\mu_{j,M_2},\,\Sigma_{ij}\right),\\
+\Sigma_{ij}&=\frac{\sigma_{i,M_1}^{2}}{w}+\frac{\sigma_{j,M_2}^{2}}{1-w}
+\end{aligned}
+\label{eq:word-81}
+\end{equation}
+
+
+式中：\(|\cdot|\)表示行列式，\(d\)为状态维数（本文\(d=9\)）。式~\eqref{eq:word-81} 中三个系数的幂次可由两项幂次高斯乘积的恒等式直接推出。将\(\bigl(N(x;\mu_{i,M_1},\sigma_{i,M_1}^{2})\bigr)^{w}\)的指数项按其尺度重新参数化为协方差\(\sigma_{i,M_1}^{2}/w\)的二次型后，利用标准高斯乘积恒等式\(N(x;a,A)N(x;b,B)=N(a;\,b,\,A+B)\,N(x;\,c,\,C)\)（其中\(C=(A^{-1}+B^{-1})^{-1}\)，\(c=C(A^{-1}a+B^{-1}b)\)），取\(A=\sigma_{i,M_1}^{2}/w\)、\(B=\sigma_{j,M_2}^{2}/(1-w)\)，即得式~\eqref{eq:word-78} 的封闭形式。据此：
+
+\begin{itemize}
+\item 交叉系数\(c_{ij}^{\mathrm{cross}}\)恰为上述恒等式中的常数项\(N(\mu_{i,M_1};\mu_{j,M_2},\Sigma_{ij})\)，即\(|2\pi\Sigma_{ij}|^{-1/2}\)（\textbf{负}半次幂），其中\(\Sigma_{ij}=\sigma_{i,M_1}^{2}/w+\sigma_{j,M_2}^{2}/(1-w)\)为两分量按幂次缩放后的协方差之和；
+\item \(c_{i}^{(w)}\)与\(c_{j}^{(1-w)}\)来自各分量自身的归一化常数幂次，在\(d\)维状态下必须显式含\(d\)的因子，即\((2\pi)^{d(1-w)/2}w^{-d/2}|\sigma_{i,M_1}^{2}|^{(1-w)/2}\)；仅当\(d=1\)时才退化为\(|2\pi\sigma_{i,M_1}^{2}/w|^{1/2}|2\pi\sigma_{i,M_1}^{2}|^{-w/2}\)的\(\tfrac12\)次幂形式。本文状态维数为9，故按\(d\)维形式实现；
+\item 融合分量的协方差取式~\eqref{eq:word-80} 的\(\sigma_{ij}^{2}=\bigl(w(\sigma_{i,M_1}^{2})^{-1}+(1-w)(\sigma_{j,M_2}^{2})^{-1}\bigr)^{-1}\)，与上述恒等式给出的\(C\)一致。
+\end{itemize}
+
+\begin{equation}
+\bigl[N(x;\mu,\Sigma)\bigr]^{w}=(2\pi)^{\frac{d(1-w)}{2}}\,\lvert\Sigma\rvert^{\frac{1-w}{2}}\,w^{-\frac{d}{2}}\,N(x;\mu,\Sigma/w)
+\label{eq:pow-identity}
+\end{equation}
+
+该系数形式与文献给出的近似 Chernoff 高斯混合融合表达式一致\cite{ahmed2012,gunay2015,gunay2016,zhu2016}。数值对照亦表明：式~\eqref{eq:pow-identity} 在\(d\in\{1,2,9\}\)、\(w\in\{0.2,0.5,0.8\}\)下的最大误差小于\(10^{-9}\)；在分量充分分离（幂次一阶近似近乎精确）的算例上，按式~\eqref{eq:word-80}、\eqref{eq:word-81} 计算的融合权重与\(p_1(x)^{w}p_2(x)^{1-w}\)的直接数值积分完全一致（误差为0）。工程实现中，由于\(d=9\)时\(c_{i}^{(w)}\)的量级可达\(10^{3}\)，直接指数运算会溢出，故端到端流水线采用与式~\eqref{eq:word-81} 等价的对数域实现（以logsumexp完成归一化），数学上与本文公式完全一致。
+
+鉴于 Chernoff
+融合算法的标准形式仅针对两种概率密度函数的融合情形，当探测编队中包含两架以上无人机时，需要引入顺序融合机制。具体做法是：先对任意两架无人机估计结果进行融合，然后将得到的中间融合结果与第三架无人机的局部估计~进行融合，直至所有无人机的局部估计被依次融合，得到目标状态的全局融合估计结果。
+
+需要说明本文为何在CI之外仍采用ACF：CI须先把各节点IMM混合后验矩匹配为单高斯，丢失机动模态后验；ACF在密度层融合，保留各模式分支的权重与结构，使融合中心可输出全局机动模态概率，为后续高层决策提供接口。模式条件融合下ACF与CI的位置精度差异不足0.1\%（第~\ref{sup:ablation}~节第4条），分量数由27降为3，估计级通信量约为CI的3倍（原顺序ACF的1/3）；但模态概率尚无可用预测收益（第~\ref{sup:ablation}~节第8条），故其定位是结构可解释性与可复用接口，而非精度或预测增益来源。
+
+
+关于融合权重 \(w\) 的选取，Hurley\cite{hurley2002} 指出，在 Kullback--Leibler 散度等距条件下，权重优化问题等价于 Chernoff 信息的最小化。然而在高斯混合场景下，融合结果对权重的敏感度有限，而对权重施加过宽的搜索范围会引入数值风险：当 \(w\to0\) 或 \(w\to1\) 时，融合结果被单一局部后验主导，性能显著恶化。敏感性分析表明，在区间 \([0.40,0.75]\) 内融合性能基本平坦，因此本文固定取
+\begin{equation}
+w=0.5
+\label{eq:weight-fixed}
+\end{equation}
+若采用自适应的权重搜索机制，应将其可行域限定在该区间内，以兼顾融合精度与数值稳健性。
+
+\begin{table}[htbp]
+\centering
+\caption{模式条件融合与直接近邻的公式级比较}\label{tab:fusion-compare}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{@{}p{2.2cm}p{3.0cm}p{3.0cm}p{2.2cm}p{4.2cm}@{}}
+\toprule
+方法 & 融合对象 & 模式处理 & \(Z_m\)/归一化 & 本文相对该工作的增量\\
+\midrule
+传统CI & 单高斯 & 无模式，先矩匹配 & 两源幂次权重\(w\) & 丢失多模态结构\\
+Battistelli等\cite{battistelli2015} & 分布式多模型（一致性更新） & 模型概率一致性融合 & 模型概率加权 & CV秩亏处理、闭式通信核算\\
+Visina等\cite{visina2020} & 局部IMM混合估计与模型概率 & 模式条件航迹融合 & 模型概率加权 & 显式\(Z_m\)归一化、CV秩亏处理、按索引对齐\\
+本文 & 模式条件高斯 & 同模式diag对齐 & 显式\(Z_m\)（式\eqref{eq:mode-cond-params}） & CV处理、索引对齐、3分量、通信闭式核算\\
+\bottomrule
+\end{tabular}}
+\par\vspace{2pt}\footnotesize 注：对文献的概括依据其公开表述，逐式细节以其原文为准，本文未逐式复核其内部实现；"本文相对该工作的增量"一栏仅陈述本文所做工作，不构成对文献适用范围的判断。
+\end{table}
+
+
+
+\subsection{奇异子空间配置的完整对照}\label{sup:cv}
+将式~\eqref{eq:word-78}--\eqref{eq:word-81} 的融合结构应用于CV/CA/Singer异构高斯混合时，必须处理低阶模型在全状态空间中的协方差秩亏问题。由第~\ref{sec:motion}~节CV运动模型可知，其状态转移矩阵在加速度维度的行元素全为零、且对应过程噪声块亦为零，故局部CV分支后验协方差在三维加速度子空间上奇异（不可逆）。若按常规数值惯例仅对其零方差对角元施加微小正则化抖动\(\epsilon\)（如\(\epsilon=10^{-2}\)，即向加速度对角元加\(\epsilon^{2}=10^{-4}\)），则在信息加权求逆时，CV分量将在“零加速度”上产生量级高达\(\epsilon^{-2}\)的病态信息权重（\(\epsilon=10^{-2}\)时为\(10^{4}\)），在跨模型交叉融合项中掩盖CA与Singer分量估计出的真实机动加速度，使融合后的全局加速度估计被显著压制而趋于零（其实际衰减程度见第~\ref{sup:ablation}~节的量化对照）。
+
+针对该奇异子空间，工程上存在两种可行处理，本文给出二者的适用条件与量化对照。\textbf{（i）丢弃退化分量（对照处理）}：CV分支在加速度维的信息本就为空，故在融合前直接剔除该非正定分量、仅对正定的CA/Singer分量执行跨机融合，加速度估计完全由中/高阶模型承担；该处理不需要引入任何标定量，实现最简，且在本文量测合同下的同臂对照中位置略优（第~\ref{sup:ablation}~节第2条）。\textbf{（ii）机动包络先验标定}：在需要保持融合输出与本地模型集一致的完整分量结构时，不丢弃分量，而是将CV分量在未建模加速度维度上的先验不确定度取为目标物理机动过载包络的同量级保守上界\(a_{\max}\)（本文目标机动包络为\(4g\approx39.23\ \mathrm{m/s^2}\)，保守取\(a_{\max}=8g\approx78.45\ \mathrm{m/s^2}\)），即
+
+
+
+式中：\(\boldsymbol{E}_{a}\)为加速度子空间的选择矩阵。本文实现采用按物理量分块的状态排序\(\boldsymbol{X}=[p_x,p_y,p_z,v_x,v_y,v_z,a_x,a_y,a_z]^{\mathrm T}\)，故加速度分量对应下标~6$\sim$8；若采用第~\ref{sec:motion}~节的逐轴排序\([x,\dot{x},\ddot{x},y,\dot{y},\ddot{y},z,\dot{z},\ddot{z}]^{\mathrm T}\)，加速度分量对应下标\(3,6,9\)，两种排序仅相差一个置换矩阵，不影响本节结论；本节及后续所有\(0:3/3:6/6:9\)切片、位置块与校准矩阵\(\boldsymbol D\)均在分块序下定义，与式~\eqref{eq:word-1}的逐轴序相差\(\boldsymbol\Pi\)。处理(ii)仅要求未建模加速度维的先验不确定度与物理机动包络同量级，属启发式标定而非严格的概率建模：\(a_{\max}\)约束的是三轴加速度矢量的模长上界，各轴独立取同量级方差是保守近似；\(\epsilon=10^{-2}\) 与 \(a_{\max}=8g\) 两种取值均能保证融合数值良态，但两者对估计结果的影响并不可忽略（第~\ref{sup:ablation}~节给出量化对照）。该标定赋予CV模型在加速度子空间上合理的信息下界（\(a_{\max}^{-2}\)），缓解该子空间协方差严格秩亏导致的融合退化；正则项仅叠加在加速度对角块、与位置/速度子空间无交叉项，故位置与速度的融合结果不因该处理被直接改动。
+
+\textbf{两种处理的量化对照与本文口径}：第~\ref{sup:ablation}~节第2条在同一分布式臂（模式条件融合+反馈）上给出三种口径的配对对照——处理(i)（丢弃退化分量）相对传统数值抖动给出$-0.070$/$-0.093$ m 的小幅但统计显著的位置改善（95\%CI $[-0.111,-0.029]$/$[-0.153,-0.036]$）与更低的加速度RMSE（25.50/25.51 对 27.22/27.19 m/s$^2$），处理(ii)（包络标定）相对数值抖动的位置改善在三重线性下显著（$-0.035$ m，95\%CI $[-0.070,-0.001]$）、在四重混合下跨零（$-0.044$ m，95\%CI $[-0.094,+0.004]$）。两处理之差（$-0.035$/$-0.049$ m，约0.3\%$\sim$0.5\%）远小于本文其他机制效应（如反馈主效应$-2.1$ m），故\textbf{不影响本文任何结论}；本文因此把处理(i)作为对照实现，而\textbf{主结果的分布式臂按处理(ii)口径报告}——这是因为本文全部消融、一致性统计与反馈口径均在该处理下成套产出并互相自洽，切换处理将使上述全部产物按约0.3\%$\sim$0.5\%的微小量重新冻结而不改变任何结论。针对数值抖动口径本身的说明：第~\ref{sup:ablation}~节给出该口径下加速度估计被压制的实测程度，本文不采用该口径作为方法配置。
+
+
+
+\subsection{反馈边界的原有分析}\label{sup:feedback}
+\begin{enumerate}
+\item \textbf{完全重置优于部分软回灌（\(\lambda^{*}=1\)）}：当\(\lambda<1\)时，本地滤波器在切向弱可观维度上累积的拖引偏移仍以\((1-\lambda)\)的比例残留在本地先验中，并在后续周期继续拉偏局部的模型概率与门控；取\(\lambda=1\)可彻底清除单机弱可观子空间的历史累积偏差；
+\item \textbf{无膨胀回灌优于协方差膨胀（\(\kappa^{*}=1\)）}：在经典线性传感器网络中常取\(\kappa>1\)以防御先验信息重复计数；但在本问题中，三机协同带来的几何条件数改善达2~3个数量级（见图~\ref{fig:obs}），正交几何观测注入的新息增益远大于节点间先验重叠效应。若人为取\(\kappa>1\)，将迫使本地PDA门控体积与滤波增益异常放大，导致下一周期门控吸入更多远距离虚假回波，性能单调恶化。
+\end{enumerate}
+
+
+
+\subsection{外部基线适配}\label{sup:baselines}
+\begin{table}[H]
+\centering
+\caption{外部基线的机制保留与本文适配（“适配”指为在同一量测集上运行而替换的部分）}\label{tab:extmap}
+\small
+\begin{tabularx}{\textwidth}{@{}lXX@{}}
+\toprule
+基线 & 保留的原文核心机制 & 本文的适配/替换 \\
+\midrule
+NN / GNN & 以预测为先验的最近邻与全局最近邻关联 & 预测器换为本文 IMM 一步预测（原文多为仅方位预测）；判决仅用多普勒通道 \\
+DVB\cite{li2024} & 公共欺骗速度 + 逐平台偏置的速度方程组，以拟合残差判别 & 保留方程结构；三机三维下方程数=未知量数（无残差自由度）故不可辨识；另按原文二维速度模型实现作对照 \\
+MSVC / MSVC-TopK\cite{renVG2026} & 多子集速度一致性判决；TopK 版加短窗速度连续性 & 同上受三机恰定约束；短窗长度按原文取值 \\
+FC\cite{rough2018} & 模糊隶属度加权关联 & \textbf{替换}：粗糙集上下近似未复现，隶属度改为高斯型（$\kappa=2$），作用于完整四维候选 \\
+BC\cite{zhao2024,lingadevaru2022} & 拖引参数辨识后补偿 & 保留“辨识+补偿”结构；辨识参照换为本文滤波预测（上界版用真值），耦合按$\rho=1$ \\
+\bottomrule
+\end{tabularx}
+\par\vspace{2pt}{\footnotesize 注：本表说明各基线在本文合同下“保留了什么、替换了什么”。因此表~\ref{tab:extcmp}--\ref{tab:extsel} 应理解为\textbf{受原文启发的代表性方法在本文统一条件下的适配实现比较}，不外推为各原始方法在其自身任务与实验条件下的普遍性能排序。}
+\end{table}
+
+\subsection{复现记录的范围}\label{sup:repro-scope}
+
+本材料涉及三种不同性质的实验产物，\textbf{必须分开理解}：
+
+\begin{table}[htbp]\centering\small
+\caption{实验世代与文中各表的对应关系}\label{tab:repro-gen}
+\begin{tabular}{@{}p{2.6cm}p{5.2cm}p{6.4cm}@{}}\toprule
+世代 & 实际工作 & 覆盖的表与产物 \\ \midrule
+历史研究（2026-10 及以前） & 原始 F50/F60 链路与早期主实验；部分原始 CSV 未随本分支保留 & 表~\ref{tab:rgpo_main}、部分消融与 ROC 表；产物见 \texttt{exp/out\_*\_archive} 与各表注 \\ \midrule
+本轮实验修复（2026-11-03） & 重建 F50/F60 链路（八方法 $\times$ 2 场景 $\times$ 50 MC）；表~\ref{tab:extcmp} 改为\textbf{单一驱动}统一重跑（九方法 $\times$ 5 臂 $\times$ 100 种子，\texttt{exp\_ext\_all100.py}，聚合自检见 \texttt{agg\_extall.py}）；另做随机几何化、随机流隔离、锁箱重建 & 表~\ref{tab:rmse_main}、表~\ref{tab:factorial}、表~\ref{tab:consistency}、表~\ref{tab:tuple}、表~\ref{tab:extcmp} 与锁箱；产物 \texttt{f50\_full\_*.csv}、\texttt{f50\_central\_*.csv}、\texttt{j100\_*.csv}、\texttt{lockbox\_v2*.csv} \\ \midrule
+最后文稿编译 & 仅文字修订、表格重排与 XeLaTeX 编译；\textbf{未再次运行实验} & 本 PDF 本身 \\ \bottomrule
+\end{tabular}\end{table}
+
+\textbf{因此“本轮编译通过”不等于“已独立复现全部结果”}：表~\ref{tab:rmse_main}--表~\ref{tab:consistency} 的每一个数字都可追溯到上文列出的 CSV，且由当前分支内的脚本（\texttt{exp\_f50\_full.py}、\texttt{exp\_f50\_central.py}、\texttt{agg\_f50\_full.py}）生成；其余历史表只保证“文稿内的表格与所引产物一致”，不保证在当前分支可重放。
+
+重建脚本与参数的对应关系：\texttt{exp\_f50\_full.py} 的 \texttt{METHODS} 列表逐项给出八种方法的实现配方（模式、是否反馈、ACF 配置、oracle 参考），\texttt{F5\_NMC/F5\_ARM}控制规模与场景；聚合脚本 \texttt{agg\_f50\_full.py} 负责中位/均值/主效应与 bootstrap 区间。
+{\footnotesize
+\begin{thebibliography}{99}
+\bibitem{ma2026} 马明雪. 干扰情况下大机动目标协同轨迹跟踪技术研究[D]. 郑州: 郑州航空工业管理学院, 2026.
+
+\bibitem{rough2018} Satapathi G S, Srihari P. Rough fuzzy joint probabilistic association for tracking multiple targets in the presence of ECM[J]. Expert Systems with Applications, 2018, 106: 132--140.
+\url{https://doi.org/10.1016/j.eswa.2018.03.067}.
+
+\bibitem{zhang2025} Zhang J, Zeng C, Tao H, et al.. An Anti-Range Gate Pull-Off Jamming Method for Robust Multitarget Tracking[J]. IEEE Transactions on Aerospace and Electronic Systems, 2025, 61(5): 14627--14641.
+\url{https://doi.org/10.1109/taes.2025.3585488}.
+
+\bibitem{calatrava2025} Calatrava H, Ranganathan A, Imbiriba T, et al.. Random Finite Set-Based Mitigation of Radar Range Deception Jamming for Single-Target Tracking[J]. IEEE Transactions on Aerospace and Electronic Systems, 2025, 61(6): 17729--17739.
+\url{https://doi.org/10.1109/taes.2025.3606848}.
+
+\bibitem{zhao2024} Zhao S, An J, Xie B, et al.. A Parameter Estimation-Based Anti-Deception Jamming Method for RIS-Aided Single-Station Radar[J]. Remote Sensing, 2024, 16(23): 4453.
+\url{https://doi.org/10.3390/rs16234453}.
+
+\bibitem{lingadevaru2022} Lingadevaru P, Pardhasaradhi B, Srihari P. Sequential Fusion Based Approach for Estimating Range Gate Pull-Off Parameter in a Networked Radar System: An ECCM Algorithm[J]. IEEE Access, 2022, 10: 70902--70918.
+\url{https://doi.org/10.1109/access.2022.3185240}.
+
+\bibitem{sun2024} Sun J, Yuan Y, Greco M S, et al.. Anti-Deception Jamming Resource Scheduling for Multitarget Tracking in Distributed Radar Networks[J]. IEEE Transactions on Aerospace and Electronic Systems, 2024, 60(6): 9111--9128.
+\url{https://doi.org/10.1109/taes.2024.3438097}.
+
+\bibitem{li2024} Li Q, Guo Y, Zhang P, Xu H, Zhang L, Chen Z, Huang Y. Deception velocity-based method to discriminate physical targets and active false targets in a multistatic radar system[J]. Remote Sensing, 2024, 16(2): 382. \url{https://doi.org/10.3390/rs16020382}.
+
+\bibitem{renVG2026} Ren G, Feng C, Dong J, Chen Y, Zhao S. Velocity consistency based multi-missile cooperative state estimation of a maneuvering target against velocity gate pull-off jamming[J]. IEEE Transactions on Aerospace and Electronic Systems, 2026, submitted for publication.
+
+\bibitem{hurley2002} Hurley M B. An information theoretic justification for covariance intersection and its generalization[C]//Proceedings of the Fifth International Conference on Information Fusion. 2002, 1: 505--511.
+\url{https://doi.org/10.1109/icif.2002.1021196}.
+
+\bibitem{ahmed2012} Ahmed N R, Campbell M. Fast Consistent Chernoff Fusion of Gaussian Mixtures for Ad Hoc Sensor Networks[J]. IEEE Transactions on Signal Processing, 2012, 60(12): 6739--6745.
+\url{https://doi.org/10.1109/tsp.2012.2215028}.
+
+\bibitem{gunay2015} Günay M, Orguner U, Demirekler M. Chernoff fusion of Gaussian mixtures for distributed maneuvering target tracking[C]//Proceedings of the 18th International Conference on Information Fusion (FUSION). Washington, DC, USA: IEEE, 2015: 1942--1949.
+
+\bibitem{gunay2016} Günay M, Orguner U, Demirekler M. Chernoff fusion of Gaussian mixtures based on sigma-point approximation[J]. IEEE Transactions on Aerospace and Electronic Systems, 2016, 52(6): 2732--2746.
+\url{https://doi.org/10.1109/taes.2016.150504}.
+
+\bibitem{zhu2016} Zhu H, Guo K, Chen S. Fusion of Gaussian mixture models for maneuvering target tracking in the presence of unknown cross-correlation[J]. Chinese Journal of Electronics, 2016, 25(2): 270--276.
+\url{https://doi.org/10.1049/cje.2016.03.012}.
+
+\bibitem{visina2020} Visina R, Bar-Shalom Y, Willett P, et al. Track-to-track fusion using inside information from local IMM estimators[J]. Journal of Advances in Information Fusion, 2020, 15(2): 112--131.
+
+\bibitem{battistelli2015} Battistelli G, Chisci L, Fantacci C, et al. Consensus-based multiple-model Bayesian filtering for distributed tracking[J]. IET Radar, Sonar \& Navigation, 2015, 9(4): 401--410.
+\url{https://doi.org/10.1049/iet-rsn.2014.0071}.
+
+\bibitem{runnalls2007} Runnalls A R. A Kullback-Leibler approach to Gaussian mixture reduction[J]. IEEE Transactions on Aerospace and Electronic Systems, 2007, 43(3): 989--999.
+\url{https://doi.org/10.1109/taes.2007.4383588}.
+
+\bibitem{ren2026} Ren G, Ma M, Feng C, Wen Z, Liu D. Distributed cooperative multi-missile maneuvering target tracking via approximate Chernoff fusion of Gaussian mixtures[J]. Transactions of the Institute of Measurement and Control, 2026.
+\url{https://doi.org/10.1177/01423312261476922}.
+
+\bibitem{skolnik2001} Skolnik M I. Introduction to Radar Systems[M]. 3rd ed. New York: McGraw-Hill, 2001.
+
+\bibitem{blair1998} Blair W D, Watson G A, Kirubarajan T, Bar-Shalom Y. Benchmark for radar allocation and tracking in ECM[J]. IEEE Transactions on Aerospace and Electronic Systems, 1998, 34(4): 1097--1114. \url{https://doi.org/10.1109/7.722694}.
+
+\bibitem{greco2006} Greco M, Gini F, Farina A, et al. Effect of phase and range gate pull-off delay quantization on jammer signal[J]. IEE Proceedings---Radar, Sonar and Navigation, 2006, 153(5): 454--459.
+
+\bibitem{zhangfda2017} Zhang Z J, Xie J W, Sheng C, et al. Deceptive jamming discrimination based on range-angle localization of a frequency diverse array[J]. Frontiers of Information Technology \& Electronic Engineering, 2017, 18(9): 1437--1446.
+
+\url{https://doi.org/10.1631/FITEE.1601577}.
+
+\bibitem{schleher1986} Schleher D C. Introduction to Electronic Warfare[M]. Dedham, MA, USA: Artech House, 1986.
+
+\bibitem{singer1970} Singer R A. Estimating optimal tracking filter performance for manned maneuvering targets[J]. IEEE Transactions on Aerospace and Electronic Systems, 1970, 6(4): 473--483.
+\url{https://doi.org/10.1109/taes.1970.310128}.
+
+\bibitem{blom1988} Blom H A P, Bar-Shalom Y. The interacting multiple model algorithm for systems with Markovian switching coefficients[J]. IEEE Transactions on Automatic Control, 1988, 33(8): 780--783.
+\url{https://doi.org/10.1109/9.1299}.
+
+\bibitem{li2003} Li X R, Jilkov V P. Survey of maneuvering target tracking. Part I: Dynamic models[J]. IEEE Transactions on Aerospace and Electronic Systems, 2003, 39(4): 1333--1364.
+\url{https://doi.org/10.1109/taes.2003.1261132}.
+
+\bibitem{barshalom2009} Bar-Shalom Y, Daum F, Huang J. The probabilistic data association filter[J]. IEEE Control Systems Magazine, 2009, 29(6): 82--100.
+\url{https://doi.org/10.1109/mcs.2009.934469}.
+
+\bibitem{julier1997} Julier S J, Uhlmann J K. A non-divergent estimation algorithm in the presence of unknown correlations[C]//Proceedings of the American Control Conference. Albuquerque, NM, USA: IEEE, 1997: 2369--2373.
+\url{https://doi.org/10.1109/acc.1997.609105}.
+
+\bibitem{tichavsky1998} Tichavský P, Muravchik C H, Nehorai A. Posterior Cramér-Rao bounds for discrete-time nonlinear filtering[J]. IEEE Transactions on Signal Processing, 1998, 46(5): 1386--1396.
+\url{https://doi.org/10.1109/78.668800}.
+\bibitem{angelopoulos2022} Angelopoulos A N, Bates S. A Gentle Introduction to Conformal Prediction and Distribution-Free Uncertainty Quantification[EB/OL]. arXiv:2107.07511v6, 2022. \url{https://arxiv.org/abs/2107.07511v6}.
+
+\bibitem{cochran1934} Cochran W G. The distribution of quadratic forms in a normal system, with applications to the analysis of covariance[J]. Mathematical Proceedings of the Cambridge Philosophical Society, 1934, 30(2): 178--191.
+
+\bibitem{seber2003linear} Seber G A F, Lee A J. Linear regression analysis[M]. 2nd ed. Hoboken, NJ, USA: John Wiley \& Sons, 2003.
+
+\end{thebibliography}
+}
+\end{document}
